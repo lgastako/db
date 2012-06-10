@@ -1,5 +1,5 @@
-Queries
-=======
+db
+==
 
 A more programmer friendly interface to databases inspired by Kenneth Reitz's
 "requests" library.
@@ -8,7 +8,7 @@ A more programmer friendly interface to databases inspired by Kenneth Reitz's
 Basic Usage
 -----------
 
-    import queries as db
+    import db
 
     db.do("DELETE FROM products")
     db.do("INSERT INTO products (name, price) VALUES ('iPod', 69.99)")
@@ -29,7 +29,7 @@ was executed in a separate transaction.
 Basic Transactions 
 ------------------
 
-    import queries as db
+    import db
 
     with db.tx() as cx:
         # transaction is opened here, and commited at the end of the with
