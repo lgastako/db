@@ -85,3 +85,7 @@ class TestConnect(DriverTests):
     def test_connect_default_two_drivers(self):
         self.install_two_drivers()
         assert db.drivers.connect() == "DEFAULT"
+
+    def test_connect_non_default(self):
+        self.install_two_drivers()
+        assert db.drivers.connect("first") == "connect_two_first"
