@@ -115,3 +115,9 @@ class TestDisconnect(DriverTests):
         db.drivers.disconnect("foo")
         assert db.drivers._DRIVERS["DEFAULT"].invocations == \
             [("DEFAULT", ("foo",), {})]
+
+    def test_disconnect_non_default(self):
+        self.install_two_drivers()
+        db.drivers.disconnect("foo", "first")
+        assert db.drivers._DRIVERS["first"].invocations == \
+            [("connect_two_first", ("foo",), {})]
