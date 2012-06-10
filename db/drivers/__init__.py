@@ -46,8 +46,7 @@ def connect(driver_name=None):
 
 
 def disconnect(conn, driver_name=None):
-    if driver_name is None:
-        raise NotImplementedError
+    driver_name = expand_name(driver_name)
     driver = _DRIVERS[driver_name]
     return driver(conn)
 

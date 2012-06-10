@@ -8,13 +8,24 @@ class DriverTests(object):
     def clear_drivers(self):
         db.drivers._DRIVERS = {}
 
+    def make_driver(self, label):
+        invocations = []
+        def driver(*args, **kwargs):
+            invocation = (label, args, kwargs)
+            invocations.append(invocation)
+            return invocation
+        driver.invocations = invocations
+        return driver
+
     def install_one_driver(self):
-        db.drivers._DRIVERS = {"only": lambda *a, **k: "connect_one_only"}
+        db.drivers.clear()
+        db.drivers.register(self.make_driver("connect_one_only"), "only")
 
     def install_two_drivers(self, second_driver_name="DEFAULT"):
-        db.drivers._DRIVERS = {"first": lambda *a, **k: "connect_two_first",
-                               second_driver_name:
-                                    lambda *a, **k: second_driver_name}
+        db.drivers.clear()
+        db.drivers.register(self.make_driver("connect_two_first"), "first"),
+        db.drivers.register(self.make_driver(second_driver_name),
+                                second_driver_name)
 
 
 class TestExpandDriverName(DriverTests):
@@ -80,12 +91,27 @@ class TestConnect(DriverTests):
 
     def test_connect_default_one_driver(self):
         self.install_one_driver()
-        assert db.drivers.connect() == "connect_one_only"
+        assert db.drivers.connect() == ("connect_one_only", (), {})
 
     def test_connect_default_two_drivers(self):
         self.install_two_drivers()
-        assert db.drivers.connect() == "DEFAULT"
+        assert db.drivers.connect() == ("DEFAULT", (), {})
 
     def test_connect_non_default(self):
         self.install_two_drivers()
-        assert db.drivers.connect("first") == "connect_two_first"
+        assert db.drivers.connect("first") == ("connect_two_first", (), {})
+
+
+class TestDisconnect(DriverTests):
+
+    def test_disconnect_default_one_driver(self):
+        self.install_one_driver()
+        db.drivers.disconnect("foo")
+        assert db.drivers._DRIVERS["only"].invocations == \
+            [("connect_one_only", ("foo",), {})]
+
+    def test_disconnect_default_two_drivers(self):
+        self.install_two_drivers()
+        db.drivers.disconnect("foo")
+        assert db.drivers._DRIVERS["DEFAULT"].invocations == \
+            [("DEFAULT", ("foo",), {})]
