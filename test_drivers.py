@@ -10,10 +10,12 @@ class DriverTests(object):
 
     def make_driver(self, label):
         invocations = []
+
         def driver(*args, **kwargs):
             invocation = (label, args, kwargs)
             invocations.append(invocation)
             return invocation
+
         driver.invocations = invocations
         return driver
 

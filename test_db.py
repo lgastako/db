@@ -19,35 +19,25 @@ class ExampleDBTests(object):
         self.conn = sqlite3.connect(":memory:")
         db.drivers.register(lambda *a, **k: self.conn)
         cursor = next(db.drivers.sqlite3.yield_cursor(self.conn))
-        cursor.execute("""CREATE TABLE foo (
-                            foo_id INTEGER PRIMARY KEY,
-                            value TEXT
-                          )""")
-        cursor.execute("INSERT INTO foo VALUES (1, 'foo')")
-        self.conn.commit()
-        self.cursor = self.conn.cursor()
-
-    def execute(self, *args, **kwargs):
-        self.cursor.execute(*args, **kwargs)
-
-    def commit(self, *args, **kwargs):
-        self.conn.commit(*args, **kwargs)
+        db.do("""CREATE TABLE foo (
+                     foo_id INTEGER PRIMARY KEY,
+                     value TEXT
+                 )
+              """)
+        db.do("INSERT INTO foo VALUES (1, 'foo')")
         self.cursor = self.conn.cursor()
 
     def insert_another(self):
-        self.cursor.execute("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
+        db.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
 
 
 class DoTests(ExampleDBTests):
 
     def test_insert(self):
-        self.execute("DELETE FROM foo")
-        self.commit()
+        db.do("DELETE FROM foo")
+        db.do("INSERT INTO foo (foo_id, value) VALUES (1, 'baz')")
 
-        self.do("INSERT INTO foo (foo_id, value) VALUES (1, 'baz')")
-
-        self.cursor.execute("SELECT * FROM foo")
-        rows = self.cursor.fetchall()
+        rows = self.items("SELECT * FROM foo")
         assert len(rows) == 1
         row = rows[0]
         assert row.foo_id == 1
@@ -75,7 +65,6 @@ class ItemsTests(ExampleDBTests):
 
     def test_basic_select_multiple(self):
         self.insert_another()
-        self.commit()
 
         rows = self.items("SELECT * FROM foo")
 
@@ -95,7 +84,6 @@ class CountTests(ExampleDBTests):
 
     def test_basic_count_multiple(self):
         self.insert_another()
-        self.commit()
         assert self.count("foo") == 2
 
     def test_complex_count(self):

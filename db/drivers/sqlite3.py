@@ -3,6 +3,7 @@
 
 from collections import namedtuple
 
+
 def namedtuple_factory(cursor, row):
     """
     Usage:
@@ -16,7 +17,7 @@ def namedtuple_factory(cursor, row):
 
 
 def yield_cursor(conn):
-    # Can we avoid doing this every time?  
+    # Can we avoid doing this every time?
     conn.row_factory = namedtuple_factory
     cursor = conn.cursor()
     yield cursor
