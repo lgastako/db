@@ -52,14 +52,6 @@ def disconnect(conn, driver_name=None):
     return driver(conn)
 
 
-# def get_connection(driver_name):
-#     return _DRIVERS[driver_name]()
-# 
-# 
-# def put_connection(driver_name, connection):
-#     return _DRIVERS[driver_name](connection)
-# 
-# 
 def yield_cursor(conn):
     # TODO: Better
     try:
