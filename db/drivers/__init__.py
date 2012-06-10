@@ -34,6 +34,10 @@ def clear():
     _DRIVERS = {}
 
 
+def count():
+    return len(_DRIVERS)
+
+
 def connect(driver_name=None):
     driver_name = expand_name(driver_name)
     driver = _DRIVERS[driver_name]

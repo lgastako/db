@@ -35,3 +35,24 @@ class TestExpandDriverName(object):
         db.drivers.register(lambda *a, **k: None, "foo")
         db.drivers.register(lambda *a, **k: None, "bar")
         assert db.drivers.expand_name(None) == "DEFAULT"
+
+
+class TestClear(object):
+
+    def test_already_clear(self):
+        db.drivers._DRIVERS = {}
+        assert db.drivers.count() == 0
+        db.drivers.clear()
+        assert db.drivers.count() == 0
+
+    def test_not_already_clear(self):
+        db.drivers._DRIVERS = {"foo":"fake"}
+        assert db.drivers.count() == 1
+        db.drivers.clear()
+        assert db.drivers.count() == 0
+
+    def test_not_already_clear_multiple(self):
+        db.drivers._DRIVERS = {"foo":"fake", "bar": "fake2"}
+        assert db.drivers.count() == 2
+        db.drivers.clear()
+        assert db.drivers.count() == 0
