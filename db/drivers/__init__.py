@@ -1,3 +1,7 @@
+import db
+
+from functools import partial
+
 DEFAULT_DRIVER_NAME = "DEFAULT"
 
 # A mapping from a name to a function that, given no arguments, "checks out"
@@ -49,6 +53,27 @@ def disconnect(conn, driver_name=None):
     driver_name = expand_name(driver_name)
     driver = _DRIVERS[driver_name]
     return driver(conn)
+
+
+class Connection(object):
+
+    def __init__(self, conn, driver_name):
+        self.conn = conn
+        self.driver_name = driver_name
+        self.do = partial(db.do, _conn=conn)
+        self.item = partial(db.item, _conn=conn)
+        self.items = partial(db.items, _conn=conn)
+        self.count = partial(db.count, _conn=conn)
+
+
+def get(driver_name=None):
+    driver_name = expand_name(driver_name)
+    conn = connect(driver_name)
+    return Connection(conn, driver_name)
+
+
+def put(connection, driver_name=None):
+    disconnect(connection.conn, driver_name)
 
 
 def yield_cursor(conn):

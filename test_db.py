@@ -11,6 +11,12 @@ import db
 # BASE TEST DEFINITIONS #
 #########################
 
+CREATE_FOO_SQL = """CREATE TABLE foo (
+                        foo_id INTEGER PRIMARY KEY,
+                        value TEXT
+                    )
+                 """
+
 
 class ExampleDBTests(object):
 
@@ -19,11 +25,7 @@ class ExampleDBTests(object):
         self.conn = sqlite3.connect(":memory:")
         db.drivers.register(lambda *a, **k: self.conn)
         cursor = next(db.drivers.sqlite3.yield_cursor(self.conn))
-        db.do("""CREATE TABLE foo (
-                     foo_id INTEGER PRIMARY KEY,
-                     value TEXT
-                 )
-              """)
+        db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
         self.cursor = self.conn.cursor()
 
@@ -163,3 +165,30 @@ class TestCountExplicit(ExplicitConnection, CountTests):
 
 class TestCountImplicit(ImplicitConnection, CountTests):
     pass
+
+
+#########################
+# ONE-OFF / OTHER TESTS #
+#########################
+
+class TestMultipleDatabases(ExampleDBTests):
+
+    def test_create_and_connect_to_two_separately(self):
+        conn2 = sqlite3.connect(":memory:")
+        db.drivers.register(lambda *a, **k: conn2, "other")
+
+        db1 = db.drivers.get()
+        db2 = db.drivers.get("other")
+
+        db2.do(CREATE_FOO_SQL)
+
+        db1.do("INSERT INTO foo (value) VALUES (1)")
+        db1.do("INSERT INTO foo (value) VALUES (2)")
+        db1.do("INSERT INTO foo (value) VALUES (3)")
+
+        db2.do("INSERT INTO foo (value) VALUES (4)")
+        db2.do("INSERT INTO foo (value) VALUES (5)")
+        db2.do("INSERT INTO foo (value) VALUES (6)")
+
+        assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
+        assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
