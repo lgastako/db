@@ -9,7 +9,7 @@ DEFAULT_DRIVER_NAME = "DEFAULT"
 _DRIVERS = {}
 
 
-def expand_driver_name(driver_name):
+def expand_name(driver_name):
     if driver_name is None:
         if len(_DRIVERS) == 1:
             driver_name = _DRIVERS.keys()[0]
@@ -19,7 +19,7 @@ def expand_driver_name(driver_name):
 
 
 def register(driver, driver_name=None):
-    driver_name = expand_driver_name(driver_name)
+    driver_name = expand_name(driver_name)
     if driver_name in _DRIVERS:
         raise KeyError("%s already in _DRIVERS" % driver_name)
     _DRIVERS[driver_name] = driver
@@ -35,7 +35,7 @@ def clear():
 
 
 def connect(driver_name=None):
-    driver_name = expand_driver_name(driver_name)
+    driver_name = expand_name(driver_name)
     driver = _DRIVERS[driver_name]
     conn = driver()
     return conn
@@ -72,3 +72,22 @@ def yield_cursor(conn):
             except Exception:
                 cursor = conn.cursor()
     yield cursor
+
+
+import sqlite3
+import psycopg2
+import mysql
+
+__all__ = [
+    # Functions
+    "expand_name",
+    "register",
+    "deregister",
+    "clear",
+    "connect",
+    "disconnect",
+    # Drivers
+    "sqlite3",
+    "psycopg2",
+    "mysql"
+]

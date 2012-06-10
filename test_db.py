@@ -4,8 +4,7 @@ import sqlite3
 
 import pytest
 
-import queries as db
-from queries import sqlite3 as qsqlite3
+import db
 
 
 #########################
@@ -18,8 +17,8 @@ class ExampleDBTests(object):
     def setup_method(self, method):
         db.drivers.clear()
         self.conn = sqlite3.connect(":memory:")
-        db.register_driver(lambda *a, **k: self.conn)
-        cursor = next(qsqlite3.yield_cursor(self.conn))
+        db.drivers.register(lambda *a, **k: self.conn)
+        cursor = next(db.drivers.sqlite3.yield_cursor(self.conn))
         cursor.execute("""CREATE TABLE foo (
                             foo_id INTEGER PRIMARY KEY,
                             bar TEXT

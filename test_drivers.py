@@ -34,5 +34,4 @@ class TestExpandDriverName(object):
         db.drivers.clear()
         db.drivers.register(lambda *a, **k: None, "foo")
         db.drivers.register(lambda *a, **k: None, "bar")
-        with pytest.raises(KeyError):
-            db.drivers.expand_name(None)
+        assert db.drivers.expand_name(None) == "DEFAULT"

@@ -23,13 +23,15 @@ def tx(*args, **kwargs):
     cursor = kwargs.pop("_cursor", None)
 
     if conn is None:
-        conn = connect()
+        import drivers as _drivers
+        conn = _drivers.connect()
 
     try:
         if cursor is None:
             # TODO: Use appropriate arguments depending on driver type
             # ideally in a very nice abstraction
-            cursor = next(yield_cursor(conn))
+            import drivers as _drivers
+            cursor = next(_drivers.yield_cursor(conn))
         yield cursor
         conn.commit()
     except Exception:
@@ -89,6 +91,7 @@ def count(from_plus, *args, **kwargs):
 #         return row
 #     return create
 
+import drivers
 __all__ = [
     "do",
     "item",
@@ -96,5 +99,3 @@ __all__ = [
     "count",
     "drivers",
 ]
-
-}
