@@ -1,10 +1,8 @@
 Go through everything and clean up.
     - Make a decision on re-exporting execute_f.
     - Document everything.
-
-Do e.g. the pytest auto test stuff in setup.py.  etc.  Think about unicode.
-
-Think about py 2.6 v 3.0, etc.
+    - Think about unicode.
+    - Coverage?
 
 Documentation, website, etc.
 
