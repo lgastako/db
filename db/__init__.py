@@ -1,7 +1,6 @@
 import logging
 
 from contextlib import contextmanager
-from functools import partial
 
 from dbapiext import execute_f
 

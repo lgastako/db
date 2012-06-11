@@ -1,6 +1,6 @@
 Go through everything and clean up.
-    - Sort out yield cursor stuffs.
     - Make a decision on re-exporting execute_f.
+    - Document everything.
 
 Do e.g. the pytest auto test stuff in setup.py.  etc.  Think about unicode.
 
