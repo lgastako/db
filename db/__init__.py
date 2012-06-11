@@ -28,7 +28,7 @@ class Database(object):
 
         if conn is None:
             import drivers as _drivers
-            conn = _drivers.connect()
+            conn = _drivers.connect(self.driver_name)
 
         try:
             if cursor is None:
@@ -89,6 +89,7 @@ def put(database, driver_name=None):
 
 defaultdb = Database()
 
+tx = defaultdb.tx
 items = defaultdb.items
 item = defaultdb.item
 do = defaultdb.do
@@ -98,6 +99,7 @@ count = defaultdb.count
 import drivers
 
 __all__ = [
+    "tx",
     "do",
     "item",
     "items",
