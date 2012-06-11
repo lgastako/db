@@ -1,3 +1,5 @@
+import urlparse
+
 import db
 
 from functools import partial
@@ -55,38 +57,11 @@ def disconnect(conn, driver_name=None):
     return driver(conn)
 
 
-def yield_cursor(conn):
-    # TODO: Better
-    try:
-        from queries import sqlite3
-        cursor = next(sqlite3.yield_cursor(conn))
-    except Exception:
-        try:
-            from queries import postgres
-            cursor = next(postgres.yield_cursor(conn))
-        except Exception:
-            try:
-                from queries import mysql
-                cursor = next(mysql.yield_cursor(conn))
-            except Exception:
-                cursor = conn.cursor()
-    yield cursor
-
-
-import sqlite3
-import psycopg2
-import mysql
-
 __all__ = [
-    # Functions
     "expand_name",
     "register",
     "deregister",
     "clear",
     "connect",
     "disconnect",
-    # Drivers
-    "sqlite3",
-    "psycopg2",
-    "mysql"
 ]

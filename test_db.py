@@ -1,3 +1,4 @@
+from collections import namedtuple
 from functools import partial
 
 import sqlite3
@@ -18,13 +19,20 @@ CREATE_FOO_SQL = """CREATE TABLE foo (
                  """
 
 
+def namedtuple_factory(cursor, row):
+    fields = [col[0] for col in cursor.description]
+    Row = namedtuple("Row", fields)
+    return Row(*row)
+
+
 class ExampleDBTests(object):
 
     def setup_method(self, method):
         db.drivers.clear()
         self.conn = sqlite3.connect(":memory:")
+        self.conn.row_factory = namedtuple_factory
         db.drivers.register(lambda *a, **k: self.conn)
-        cursor = next(db.drivers.sqlite3.yield_cursor(self.conn))
+        cursor = self.conn.cursor()
         db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
         self.cursor = self.conn.cursor()
@@ -179,8 +187,6 @@ class TestMultipleDatabases(ExampleDBTests):
 
         db.drivers.register(lambda *a, **k: conn1, "manual1")
         db.drivers.register(lambda *a, **k: conn2, "manual2")
-
-        import ipdb; ipdb.set_trace()
 
         db1 = db.get("manual1")
         db2 = db.get("manual2")

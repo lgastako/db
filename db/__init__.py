@@ -25,10 +25,7 @@ def tx(*args, **kwargs):
 
     try:
         if cursor is None:
-            # TODO: Use appropriate arguments depending on driver type
-            # ideally in a very nice abstraction
-            import drivers as _drivers
-            cursor = next(_drivers.yield_cursor(conn))
+            cursor = conn.cursor()
         yield cursor
         conn.commit()
     except Exception:
