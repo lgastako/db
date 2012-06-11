@@ -183,7 +183,9 @@ class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
         conn1 = sqlite3.connect(":memory:")
+        conn1.row_factory = namedtuple_factory
         conn2 = sqlite3.connect(":memory:")
+        conn2.row_factory = namedtuple_factory
 
         db.drivers.register(lambda *a, **k: conn1, "manual1")
         db.drivers.register(lambda *a, **k: conn2, "manual2")
