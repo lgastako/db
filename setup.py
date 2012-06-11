@@ -25,8 +25,19 @@ class PyTest(Command):
 if __name__ == "__main__":
     setup(name="db",
           version="0.0.1",
-          description="Queries for Humans",
+          description="Databases for Humans",
           author="John Evans",
           author_email="lgastako@gmail.com",
+          url="https://github.com/lgastako/db",
           provides="db",
-          cmdclass={"test": PyTest})
+          cmdclass={"test": PyTest},
+          classifiers=[
+            "Development Status :: 4 - Beta",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: MIT License",
+            "Operating System :: OS Independent",
+            "Programming Language :: SQL",
+            "Programming Language :: Python :: 2",
+            "Topic :: Database",
+            "Topic :: Software Development :: Libraries",
+          ])
