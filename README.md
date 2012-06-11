@@ -2,7 +2,11 @@ db
 ==
 
 A more programmer friendly interface to databases inspired by Kenneth Reitz's
-"requests" library.
+"requests" library.  
+
+I've got a long way to go but I'm using this code in a number of projects
+already so I figured I'd put it out there.  Also please note that this is
+not, and never will be, an attempt at an ORM.
 
 
 Basic Usage
@@ -44,7 +48,41 @@ Basic Transactions
 
 So far we've been getting our database connections automatically.  What's
 happening behind the scenes is that the do, item(s), etc functions that
-exist right on the db module all operate on the default connection.  The
-default connection is the first connection registered with the connection
-manaager.  The connection manager, connection pool boop de boop.
+exist right on the db module all operate on the default database.
 
+
+Multiple Databases
+------------------
+
+You can get a specific database by name:
+
+    foo_db = db.get("foo_db")
+
+And use all of the same functions on it:
+
+    foo.db.items("SELECT COUNT(*) AS n FROM foos").n
+
+etc.
+
+
+"Drivers"
+---------
+
+Drivers for the DB module are very simple.  They consist of a function,
+which, when called with no arguments, returns a new connection ready for use,
+and when called with a previously-returned connection as an argument, does
+whatever is necessary to dispose of the connection -- returning it to a
+connection pool perhaps, etc.
+
+The driver is responsible for making sure that the underlying
+connection/cursors are NamedTupleCursors (e.g by setting the appropriate
+flag on the connection object or returning a wrapped connection that
+sets the appropriate flag on .cursor calls, etc).
+
+
+TODO
+----
+
+- Nested transactions
+- Documentation
+- Website

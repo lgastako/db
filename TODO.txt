@@ -1,9 +1,0 @@
-Go through everything and clean up.
-    - Make a decision on re-exporting execute_f.
-    - Document everything.
-    - Think about unicode.
-    - Coverage?
-
-Documentation, website, etc.
-
-Nested transactions .... hmmm

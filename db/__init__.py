@@ -2,7 +2,7 @@ import logging
 
 from contextlib import contextmanager
 
-from dbapiext import execute_f
+from dbapiext import execute_f as execute
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class Database(object):
         cursor = kwargs.pop("_cursor", None)
 
         with self.tx(conn, cursor) as cursor:
-            execute_f(cursor, sql, *args, **kwargs)
+            execute(cursor, sql, *args, **kwargs)
             try:
                 results = cursor.fetchall()
             except Exception, ex:

@@ -4,6 +4,8 @@ import setuptools  # for side-effects to make 'python setup.py develop' work
 from setuptools import setup
 from setuptools import Command
 
+# To generate the runtests.py script:
+# py.test --genscript=runtests.py
 
 class PyTest(Command):
     user_options = []
