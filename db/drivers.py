@@ -26,8 +26,6 @@ def expand_name(driver_name):
 
 def register(driver, driver_name=None):
     driver_name = expand_name(driver_name)
-    if driver_name in _DRIVERS:
-        raise KeyError("%s already in _DRIVERS" % driver_name)
     _DRIVERS[driver_name] = driver
 
 
