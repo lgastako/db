@@ -6,3 +6,5 @@ Do e.g. the pytest auto test stuff in setup.py.  etc.  Think about unicode.
 Think about py 2.6 v 3.0, etc.
 
 Documentation, website, etc.
+
+Nested transactions .... hmmm

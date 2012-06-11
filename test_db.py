@@ -174,12 +174,18 @@ class TestCountImplicit(ImplicitConnection, CountTests):
 class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
+        conn1 = sqlite3.connect(":memory:")
         conn2 = sqlite3.connect(":memory:")
-        db.drivers.register(lambda *a, **k: conn2, "other")
 
-        db1 = db.drivers.get()
-        db2 = db.drivers.get("other")
+        db.drivers.register(lambda *a, **k: conn1, "manual1")
+        db.drivers.register(lambda *a, **k: conn2, "manual2")
 
+        import ipdb; ipdb.set_trace()
+
+        db1 = db.get("manual1")
+        db2 = db.get("manual2")
+
+        db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)
 
         db1.do("INSERT INTO foo (value) VALUES (1)")
