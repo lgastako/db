@@ -7,6 +7,7 @@ from setuptools import Command
 # To generate the runtests.py script:
 # py.test --genscript=runtests.py
 
+
 class PyTest(Command):
     user_options = []
 
@@ -17,7 +18,8 @@ class PyTest(Command):
         pass
 
     def run(self):
-        import sys,subprocess
+        import sys
+        import subprocess
         errno = subprocess.call([sys.executable, 'runtests.py'])
         raise SystemExit(errno)
 

@@ -60,8 +60,8 @@ class Database(object):
         results = self.items(sql, *args, **kwargs)
         num_results = len(results)
         if num_results != 1:
-            raise UnexpectedCardinality("Expected exactly one item but got %d." %
-                                        num_results)
+            raise UnexpectedCardinality(
+                "Expected exactly one item but got %d." % num_results)
         return results[0]
 
     def first(self, sql, *args, **kwargs):
