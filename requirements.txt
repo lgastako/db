@@ -1,1 +1,4 @@
 antiorm==1.1.1
+pytest==2.2.1
+pytest-cov==1.5
+pytest-pep8==0.7
