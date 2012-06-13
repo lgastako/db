@@ -32,6 +32,7 @@ if __name__ == "__main__":
           author_email="lgastako@gmail.com",
           url="https://github.com/lgastako/db",
           provides=["db"],
+          packages=["db"],
           cmdclass={"test": PyTest},
           classifiers=[
             "Development Status :: 4 - Beta",
