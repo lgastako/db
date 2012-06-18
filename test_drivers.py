@@ -1,6 +1,9 @@
 import pytest
+import sqlite3
 
 import db
+
+from test_db import namedtuple_factory
 
 
 class DriverTests(object):
@@ -128,8 +131,18 @@ class TestDisconnect(DriverTests):
 class TestMisc(DriverTests):
 
     def test_registering_returns_db(self):
-        db.drivers.clear()
-        assert db.drivers.count() == 0
-        test_db = db.drivers.register(self.make_driver("test"), "test")
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = namedtuple_factory
+        test_db = db.drivers.register(lambda *a, **kw: conn, "test_db")
+
         assert test_db is not None
-        assert hasattr(test_db, "items")
+
+        test_db.do("""CREATE TABLE foo (
+            foo_id INTEGER PRIMARY KEY,
+            bar TEXT NOT NULL
+        )""")
+        test_db.do("INSERT INTO foo (foo_id, bar) VALUES (1, 'a')")
+        test_db.do("INSERT INTO foo (foo_id, bar) VALUES (2, 'b')")
+        test_db.do("INSERT INTO foo (foo_id, bar) VALUES (3, 'c')")
+
+        assert test_db.item("SELECT COUNT(*) AS n FROM foo").n == 3
