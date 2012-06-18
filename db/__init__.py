@@ -23,6 +23,17 @@ class Database(object):
 
     def __init__(self, driver_name=None):
         self.driver_name = driver_name
+        self._driver = None
+
+    @property
+    def driver(self):
+        if self._driver is None:
+            from db import drivers as _drivers
+            self._driver = _drivers.get(self.driver_name)
+        return self._driver
+
+    def connect(self):
+        return self.driver.connect()
 
     @contextmanager
     def txc(self, *args, **kwargs):
@@ -30,16 +41,13 @@ class Database(object):
         cursor = kwargs.pop("_cursor", None)
 
         if conn is None:
-            import drivers as _drivers
-            conn = _drivers.connect(self.driver_name)
+            conn = self.connect()
 
         try:
             if cursor is None:
-                cursor = conn.cursor()
-                if hasattr(conn, "__paramstyle__"):
-                    paramstyle = getattr(conn, "__paramstyle__")
-                    setattr(cursor, "__paramstyle__", paramstyle)
-                import ipdb; ipdb.set_trace()
+                cursor = self.driver.cursor(conn)
+            assert conn is not None
+            assert cursor is not None
             yield conn, cursor
             conn.commit()
         except Exception:
@@ -56,16 +64,13 @@ class Database(object):
         cursor = kwargs.pop("_cursor", None)
 
         with self.tx(conn, cursor) as cursor:
-            if hasattr(cursor, "__paramstyle__"):
-                kwargs["_paramstyle"] = getattr(conn, "__paramstyle__")
+            kwargs["paramstyle"] = self.driver.PARAM_STYLE
             execute(cursor, sql, *args, **kwargs)
             try:
                 results = cursor.fetchall()
             except Exception, ex:
                 results = None
-                # TODO: This is specifically for psycopg2, we need to handle
-                # in general.
-                if "no results to fetch" not in str(ex):
+                if not driver.handle_exception(ex):
                     raise
         return results
 
@@ -125,16 +130,47 @@ class Database(object):
 
 
 def get(driver_name=None):
-    driver_name = drivers.expand_name(driver_name)
     return Database(driver_name)
 
 
-def put(database, driver_name=None):
-    if database.conn:
-        disconnect(database.conn, database.driver_name)
+def put(database):
+    database.release()
 
 
-defaultdb = Database()
+class DefaultDatabase(object):
+
+    def _getdb(self):
+        return get()
+
+    def tx(self, *args, **kwargs):
+        return self._getdb().tx(*args, **kwargs)
+
+    def items(self, *args, **kwargs):
+        return self._getdb().items(*args, **kwargs)
+
+    def item(self, *args, **kwargs):
+        return self._getdb().item(*args, **kwargs)
+
+    def relation(self, *args, **kwargs):
+        return self._getdb().relation(*args, **kwargs)
+
+    def tuple(self, *args, **kwargs):
+        return self._getdb().tuple(*args, **kwargs)
+
+    def do(self, *args, **kwargs):
+        return self._getdb().do(*args, **kwargs)
+
+    def first(self, *args, **kwargs):
+        return self._getdb().first(*args, **kwargs)
+
+    def count(self, *args, **kwargs):
+        return self._getdb().count(*args, **kwargs)
+
+    def rel_count(self, *args, **kwargs):
+        return self._getdb().rel_count(*args, **kwargs)
+
+
+defaultdb = DefaultDatabase()
 
 tx = defaultdb.tx
 items = defaultdb.items

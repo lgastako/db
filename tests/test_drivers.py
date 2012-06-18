@@ -10,51 +10,40 @@ class DriverTests(object):
         db.drivers._DRIVERS = {}
 
     def make_driver(self, label):
-        invocations = []
 
-        def driver(*args, **kwargs):
-            invocation = (label, args, kwargs)
-            invocations.append(invocation)
-            return invocation
+        class TestDriver(db.drivers.Driver):
 
-        driver.invocations = invocations
+            def __init__(self, *args, **kwargs):
+                super(TestDriver, self).__init__(*args, **kwargs)
+                self.driver_label = label
+                self.invocations = []
+
+            def connect(self, *args, **kwargs):
+                invocation = (label, args, kwargs)
+                self.invocations.append(invocation)
+                return invocation
+
+        driver = TestDriver()
         return driver
 
     def install_one_driver(self):
         db.drivers.clear()
-        db.drivers.register(self.make_driver("connect_one_only"), "only")
+        self.only_db = \
+            db.drivers.register(self.make_driver("connect_one_only"), "only")
 
-    def install_two_drivers(self, second_driver_name="DEFAULT"):
+    def install_one_default_driver(self):
         db.drivers.clear()
-        db.drivers.register(self.make_driver("connect_two_first"), "first"),
-        db.drivers.register(self.make_driver(second_driver_name),
-                            second_driver_name)
+        self.default_db = \
+            db.drivers.register(self.make_driver("connect_default_only"))
 
-
-class TestExpandDriverName(DriverTests):
-
-    def test_not_none_non_existent(self):
-        assert db.drivers.expand_name("bar") == "bar"
-
-    def test_not_none_single_driver(self):
-        self.install_one_driver()
-        assert db.drivers.expand_name("foo") == "foo"
-
-    def test_not_none_multiple_drivers_default_exists(self):
-        self.install_two_drivers()
-        assert db.drivers.expand_name("foo") == "foo"
-
-    def test_none_single_driver(self):
-        self.install_one_driver()
-        assert db.drivers.expand_name(None) == "only"
-
-    def test_none_multiple_drivers_default_exists(self):
-        self.install_two_drivers()
-        assert db.drivers.expand_name(None) == "DEFAULT"
-
-    def test_none_multiple_drivers_no_default_exists(self):
-        self.install_two_drivers("bar")
-        assert db.drivers.expand_name(None) == "DEFAULT"
+    def install_two_drivers(self):
+        db.drivers.clear()
+        self.first_db = \
+            db.drivers.register(
+                self.make_driver("connect_two_first"), "first")
+        self.second_db = \
+            db.drivers.register(
+                self.make_driver("connect_two_second"), "second")
 
 
 class TestCount(DriverTests):
@@ -90,47 +79,36 @@ class TestClear(DriverTests):
         assert db.drivers.count() == 0
 
 
-class TestConnect(DriverTests):
+class TestGet(DriverTests):
 
-    def test_connect_default_one_driver(self):
+    def test_default_one_default_driver(self):
+        self.install_one_default_driver()
+        default_db = db.get()
+        assert default_db.driver.driver_label == "connect_default_only"
+
+    def test_default_one_non_default_driver(self):
         self.install_one_driver()
-        assert db.drivers.connect() == ("connect_one_only", (), {})
+        default_db = db.get()
+        with pytest.raises(KeyError):
+            db.items("SELECT * FROM foo")
 
-    def test_connect_default_two_drivers(self):
-        self.install_two_drivers()
-        assert db.drivers.connect() == ("DEFAULT", (), {})
-
-    def test_connect_non_default(self):
-        self.install_two_drivers()
-        assert db.drivers.connect("first") == ("connect_two_first", (), {})
-
-
-class TestDisconnect(DriverTests):
-
-    def test_disconnect_default_one_driver(self):
+    def test_named_one_named_driver(self):
         self.install_one_driver()
-        db.drivers.disconnect("foo")
-        assert db.drivers._DRIVERS["only"].invocations == \
-            [("connect_one_only", ("foo",), {})]
+        named_db = db.get("only")
+        assert named_db.driver.driver_label == "connect_one_only"
 
-    def test_disconnect_default_two_drivers(self):
+    def test_each_of_two_named_drivers(self):
         self.install_two_drivers()
-        db.drivers.disconnect("foo")
-        assert db.drivers._DRIVERS["DEFAULT"].invocations == \
-            [("DEFAULT", ("foo",), {})]
-
-    def test_disconnect_non_default(self):
-        self.install_two_drivers()
-        db.drivers.disconnect("foo", "first")
-        assert db.drivers._DRIVERS["first"].invocations == \
-            [("connect_two_first", ("foo",), {})]
+        first_db = db.get("first")
+        assert first_db.driver.driver_label == "connect_two_first"
+        second_db = db.get("second")
+        assert second_db.driver.driver_label == "connect_two_second"
 
 
 class TestMisc(DriverTests):
 
     def test_registering_returns_db(self):
-        conn = db.drivers.sqlite3x.connect(":memory:")
-        test_db = db.drivers.register(lambda *a, **kw: conn, "test_db")
+        test_db = db.drivers.sqlite3x.register(":memory:", "test_db")
 
         assert test_db is not None
 

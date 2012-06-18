@@ -22,11 +22,10 @@ class ExampleDBTests(object):
 
     def setup_method(self, method):
         db.drivers.clear()
-        self.conn = db.drivers.sqlite3x.connect(":memory:")
-        self.cursor = self.conn.cursor()
         db.drivers.sqlite3x.register(":memory:")
         db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
+        self.db = db.get()
 
     def insert_another(self):
         db.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
@@ -113,10 +112,11 @@ class ExplicitConnection(object):
 
     def setup_method(self, method):
         super(ExplicitConnection, self).setup_method(method)
-        self.do = partial(db.do, _conn=self.conn)
-        self.item = partial(db.item, _conn=self.conn)
-        self.items = partial(db.items, _conn=self.conn)
-        self.count = partial(db.count, _conn=self.conn)
+        conn = self.db.driver.connect()
+        self.do = partial(db.do, _conn=conn)
+        self.item = partial(db.item, _conn=conn)
+        self.items = partial(db.items, _conn=conn)
+        self.count = partial(db.count, _conn=conn)
 
 
 class ImplicitConnection(object):
@@ -173,14 +173,8 @@ class TestCountImplicit(ImplicitConnection, CountTests):
 class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
-        conn1 = db.drivers.sqlite3x.connect(":memory:")
-        conn2 = db.drivers.sqlite3x.connect(":memory:")
-
-        db.drivers.register(lambda *a, **k: conn1, "manual1")
-        db.drivers.register(lambda *a, **k: conn2, "manual2")
-
-        db1 = db.get("manual1")
-        db2 = db.get("manual2")
+        db1 = db.drivers.sqlite3x.register(":memory:", "db1")
+        db2 = db.drivers.sqlite3x.register(":memory:", "db2")
 
         db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)

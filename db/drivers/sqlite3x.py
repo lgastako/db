@@ -1,13 +1,9 @@
-import db.drivers
 import sqlite3
 
+import db
+from db.drivers import Driver
+
 from collections import namedtuple
-
-
-class Sqlite3Driver(object):
-
-    def __init__(self, conn_string):
-        self.conn_string = conn_string
 
 
 def _namedtuple_factory(cursor, row):
@@ -24,10 +20,22 @@ def connect(*args, **kwargs):
     """
 
     conn = sqlite3.connect(*args, **kwargs)
-    conn.row_factory = self._namedtuple_factory
+    conn.row_factory = _namedtuple_factory
     return conn
 
 
 def register(conn_string, name=None):
     driver = Sqlite3Driver(conn_string)
     return db.drivers.register(driver, name)
+
+
+class Sqlite3Driver(Driver):
+
+    PARAM_STYLE = "qmark"
+
+    def __init__(self, conn_string):
+        self.conn_string = conn_string
+        self.conn = connect(self.conn_string)
+
+    def connect(self):
+        return self.conn

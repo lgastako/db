@@ -9,4 +9,4 @@ class TestSqlite3x:
         d = db.drivers.sqlite3x.register(":memory:")
         d.do("CREATE TABLE foo (bar)")
         sql = "SELECT COUNT(*) AS n FROM foo WHERE bar = %X"
-        assert d.items(sql, "baz").n == 0
+        assert d.item(sql, "baz").n == 0

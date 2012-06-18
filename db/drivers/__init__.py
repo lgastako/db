@@ -4,28 +4,20 @@ import db
 
 from functools import partial
 
-DEFAULT_DRIVER_NAME = "DEFAULT"
-
 # A mapping from a name to a function that, given no arguments, "checks out"
 # a connection (or creates one if it's not a pool) and given a connection
 # back, "returns it to the pool" (or destroy's it if it's not a pool, etc)
 # If only one exists it will become the default driver automatically.  If
-# more than one exists then the key "DEFAULT" should point to the default
+# more than one exists then the key "None" should point to the default
 # driver.
 _DRIVERS = {}
 
 
-def expand_name(driver_name):
-    if driver_name is None:
-        if len(_DRIVERS) == 1:
-            driver_name = _DRIVERS.keys()[0]
-        else:
-            driver_name = DEFAULT_DRIVER_NAME
-    return driver_name
+def get(driver_name=None):
+    return _DRIVERS[driver_name]
 
 
 def register(driver, driver_name=None):
-    driver_name = expand_name(driver_name)
     _DRIVERS[driver_name] = driver
     return db.get(driver_name)
 
@@ -43,28 +35,37 @@ def count():
     return len(_DRIVERS)
 
 
-def connect(driver_name=None):
-    driver_name = expand_name(driver_name)
-    driver = _DRIVERS[driver_name]
-    conn = driver()
-    return conn
+class Driver(object):
+    PARAM_STYLE = "pyformat"
+
+    def connect(self):
+        raise NotImplementedError
+
+    def ignore_exception(self):
+        return False
+
+    def cursor(self, conn):
+        return conn.cursor()
+
+    def release(self):
+        pass
 
 
-def disconnect(conn, driver_name=None):
-    driver_name = expand_name(driver_name)
-    driver = _DRIVERS[driver_name]
-    return driver(conn)
+class TestDriver(Driver):
+
+    def __init__(self, name):
+        self.name = name
 
 
 from db.drivers import sqlite3x
 
 __all__ = [
-    "expand_name",
+    "get",
     "register",
     "deregister",
     "clear",
     "connect",
-    "disconnect",
+    "Driver",
     # Drivers
     "sqlite3x"
 ]
