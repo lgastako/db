@@ -25,7 +25,7 @@ class Database(object):
         self.driver_name = driver_name
 
     @contextmanager
-    def tx(self, *args, **kwargs):
+    def txc(self, *args, **kwargs):
         conn = kwargs.pop("_conn", None)
         cursor = kwargs.pop("_cursor", None)
 
@@ -36,17 +36,28 @@ class Database(object):
         try:
             if cursor is None:
                 cursor = conn.cursor()
-            yield cursor
+                if hasattr(conn, "__paramstyle__"):
+                    paramstyle = getattr(conn, "__paramstyle__")
+                    setattr(cursor, "__paramstyle__", paramstyle)
+                import ipdb; ipdb.set_trace()
+            yield conn, cursor
             conn.commit()
         except Exception:
             conn.rollback()
             raise
+
+    @contextmanager
+    def tx(self, *args, **kwargs):
+        with self.txc(*args, **kwargs) as (conn, cursor):
+            yield cursor
 
     def items(self, sql, *args, **kwargs):
         conn = kwargs.pop("_conn", None)
         cursor = kwargs.pop("_cursor", None)
 
         with self.tx(conn, cursor) as cursor:
+            if hasattr(cursor, "__paramstyle__"):
+                kwargs["_paramstyle"] = getattr(conn, "__paramstyle__")
             execute(cursor, sql, *args, **kwargs)
             try:
                 results = cursor.fetchall()

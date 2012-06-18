@@ -1,10 +1,14 @@
-import db
-
-from test_db import ExampleDBTests
-
-
 try:
     from Dee import Relation
+    DEE = True
+except ImportError:
+    DEE = False
+
+
+if DEE:
+    import db
+
+    from test_db import ExampleDBTests
 
     class TestRelations(ExampleDBTests):
 
@@ -90,8 +94,3 @@ try:
             assert rel.heading() == frozenset(["foo_bar_count"])
             tup = rel.toTuple()
             assert tup.foo_bar_count == 2
-
-
-except ImportError:
-    import warnings
-    warnings.warn("skipping dee tests because dee is not installed")
