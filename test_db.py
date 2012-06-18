@@ -19,23 +19,15 @@ CREATE_FOO_SQL = """CREATE TABLE foo (
                  """
 
 
-def namedtuple_factory(cursor, row):
-    fields = [col[0] for col in cursor.description]
-    Row = namedtuple("Row", fields)
-    return Row(*row)
-
-
 class ExampleDBTests(object):
 
     def setup_method(self, method):
         db.drivers.clear()
-        self.conn = sqlite3.connect(":memory:")
-        self.conn.row_factory = namedtuple_factory
-        db.drivers.register(lambda *a, **k: self.conn)
-        cursor = self.conn.cursor()
+        self.conn = db.drivers.sqlite3x.connect(":memory:")
+        self.cursor = self.conn.cursor()
+        db.drivers.sqlite3x.register(":memory:")
         db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
-        self.cursor = self.conn.cursor()
 
     def insert_another(self):
         db.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
@@ -182,10 +174,8 @@ class TestCountImplicit(ImplicitConnection, CountTests):
 class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
-        conn1 = sqlite3.connect(":memory:")
-        conn1.row_factory = namedtuple_factory
-        conn2 = sqlite3.connect(":memory:")
-        conn2.row_factory = namedtuple_factory
+        conn1 = db.drivers.sqlite3x.connect(":memory:")
+        conn2 = db.drivers.sqlite3x.connect(":memory:")
 
         db.drivers.register(lambda *a, **k: conn1, "manual1")
         db.drivers.register(lambda *a, **k: conn2, "manual2")

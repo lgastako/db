@@ -56,6 +56,8 @@ def disconnect(conn, driver_name=None):
     return driver(conn)
 
 
+from db.drivers import sqlite3x
+
 __all__ = [
     "expand_name",
     "register",
@@ -63,4 +65,6 @@ __all__ = [
     "clear",
     "connect",
     "disconnect",
+    # Drivers
+    "sqlite3x"
 ]
