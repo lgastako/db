@@ -1,3 +1,4 @@
+import db
 from db.drivers import Driver
 
 import psycopg2
@@ -10,16 +11,20 @@ def connect(*args, **kwargs):
     return conn
 
 
+def register(conn_string, name=None, **kwargs):
+    driver = PostgresDriver(conn_string, **kwargs)
+    return db.drivers.register(driver, name)
+
+
 class PostgresDriver(Driver):
 
     PARAM_STYLE = "pyformat"
 
     def __init__(self, conn_string):
         self.conn_string = conn_string
-        self.conn = connect(self.conn_string)
 
     def connect(self):
-        return conn
+        return connect(self.conn_string)
 
     def ignore_exception(self, ex):
         return "no results to fetch" in str(ex)
