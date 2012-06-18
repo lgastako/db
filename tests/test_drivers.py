@@ -121,3 +121,16 @@ class TestMisc(DriverTests):
         test_db.do("INSERT INTO foo (foo_id, bar) VALUES (3, 'c')")
 
         assert test_db.item("SELECT COUNT(*) AS n FROM foo").n == 3
+
+
+# These actually pass even if they aren't included in __all__ so I'm
+# commenting them out until I can investigate (so as to not give a
+# misleading impression that they are doing something).
+#
+# class TestDefaultDriversAreIncluded:
+#
+#     def test_sqlite3(self):
+#         db.drivers.sqlite3x.connect
+#
+#     def test_psycopg2(self):
+#         db.drivers.psycopg2x.connect

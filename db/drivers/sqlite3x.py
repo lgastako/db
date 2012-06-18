@@ -24,8 +24,8 @@ def connect(*args, **kwargs):
     return conn
 
 
-def register(conn_string, name=None):
-    driver = Sqlite3Driver(conn_string)
+def register(conn_string, name=None, **kwargs):
+    driver = Sqlite3Driver(conn_string, **kwargs)
     return db.drivers.register(driver, name)
 
 
@@ -33,9 +33,9 @@ class Sqlite3Driver(Driver):
 
     PARAM_STYLE = "qmark"
 
-    def __init__(self, conn_string):
+    def __init__(self, conn_string, **kwargs):
         self.conn_string = conn_string
-        self.conn = connect(self.conn_string)
+        self.conn = connect(self.conn_string, **kwargs)
 
     def connect(self):
         return self.conn

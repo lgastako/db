@@ -58,6 +58,7 @@ class TestDriver(Driver):
 
 
 from db.drivers import sqlite3x
+from db.drivers import psycopg2x
 
 __all__ = [
     "get",
@@ -67,5 +68,6 @@ __all__ = [
     "connect",
     "Driver",
     # Drivers
-    "sqlite3x"
+    "sqlite3x",
+    "psycopg2x"
 ]
