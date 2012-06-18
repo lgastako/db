@@ -27,7 +27,7 @@ class DriverTests(object):
         db.drivers.clear()
         db.drivers.register(self.make_driver("connect_two_first"), "first"),
         db.drivers.register(self.make_driver(second_driver_name),
-                                second_driver_name)
+                            second_driver_name)
 
 
 class TestExpandDriverName(DriverTests):
@@ -123,3 +123,13 @@ class TestDisconnect(DriverTests):
         db.drivers.disconnect("foo", "first")
         assert db.drivers._DRIVERS["first"].invocations == \
             [("connect_two_first", ("foo",), {})]
+
+
+class TestMisc(DriverTests):
+
+    def test_registering_returns_db(self):
+        db.drivers.clear()
+        assert db.drivers.count() == 0
+        test_db = db.drivers.register(self.make_driver("test"), "test")
+        assert test_db is not None
+        assert hasattr(test_db, "items")

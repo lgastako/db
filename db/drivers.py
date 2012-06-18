@@ -27,6 +27,7 @@ def expand_name(driver_name):
 def register(driver, driver_name=None):
     driver_name = expand_name(driver_name)
     _DRIVERS[driver_name] = driver
+    return db.get(driver_name)
 
 
 def deregister(driver_name):
