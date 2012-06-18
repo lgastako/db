@@ -13,7 +13,7 @@ if __name__ == "__main__":
           author_email="lgastako@gmail.com",
           url="https://github.com/lgastako/db",
           provides=["db"],
-          packages=["db"],
+          packages=["db", "db.drivers"],
           classifiers=["Development Status :: 4 - Beta",
                        "Intended Audience :: Developers",
                        "License :: OSI Approved :: MIT License",
