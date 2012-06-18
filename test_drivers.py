@@ -3,8 +3,6 @@ import sqlite3
 
 import db
 
-from test_db import namedtuple_factory
-
 
 class DriverTests(object):
 
@@ -131,8 +129,7 @@ class TestDisconnect(DriverTests):
 class TestMisc(DriverTests):
 
     def test_registering_returns_db(self):
-        conn = sqlite3.connect(":memory:")
-        conn.row_factory = namedtuple_factory
+        conn = db.drivers.sqlite3x.connect(":memory:")
         test_db = db.drivers.register(lambda *a, **kw: conn, "test_db")
 
         assert test_db is not None
