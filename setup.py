@@ -34,13 +34,11 @@ if __name__ == "__main__":
           provides=["db"],
           packages=["db"],
           cmdclass={"test": PyTest},
-          classifiers=[
-            "Development Status :: 4 - Beta",
-            "Intended Audience :: Developers",
-            "License :: OSI Approved :: MIT License",
-            "Operating System :: OS Independent",
-            "Programming Language :: SQL",
-            "Programming Language :: Python :: 2",
-            "Topic :: Database",
-            "Topic :: Software Development :: Libraries",
-          ])
+          classifiers=["Development Status :: 4 - Beta",
+                       "Intended Audience :: Developers",
+                       "License :: OSI Approved :: MIT License",
+                       "Operating System :: OS Independent",
+                       "Programming Language :: SQL",
+                       "Programming Language :: Python :: 2",
+                       "Topic :: Database",
+                       "Topic :: Software Development :: Libraries"])

@@ -89,7 +89,7 @@ class ItemsTests(ExampleDBTests):
 
 class CountTests(ExampleDBTests):
 
-    def test_basic_count(self):
+    def test_most_basic(self):
         assert self.count("foo") == 1
 
     def test_basic_count_multiple(self):

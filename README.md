@@ -80,6 +80,13 @@ flag on the connection object or returning a wrapped connection that
 sets the appropriate flag on .cursor calls, etc).
 
 
+NEW! Experimental support for Dee.
+----------------------------------
+
+items -> relation
+item -> tuple
+
+
 TODO
 ----
 
