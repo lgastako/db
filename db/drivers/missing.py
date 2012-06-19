@@ -10,10 +10,8 @@ def connect(*args, **kwargs):
     raise NotImplementedError
 
 
-def register(conn_string, name=None, **kwargs):
-    driver = MissingDriver(conn_string, **kwargs)
-    return db.drivers.register(driver, name)
-
-
 class MissingDriver(Driver):
     pass
+
+
+register = MissingDriver.register

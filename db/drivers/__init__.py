@@ -38,10 +38,13 @@ def count():
 class Driver(object):
     PARAM_STYLE = "pyformat"
 
+    def __init__(self, conn_string):
+        self.conn_string = conn_string
+
     def connect(self):
         raise NotImplementedError
 
-    def ignore_exception(self):
+    def ignore_exception(self, _ex):
         return False
 
     def cursor(self, conn):
@@ -50,11 +53,10 @@ class Driver(object):
     def release(self):
         pass
 
-
-class TestDriver(Driver):
-
-    def __init__(self, name):
-        self.name = name
+    @classmethod
+    def register(cls, conn_string, name=None, **kwargs):
+        driver = cls(conn_string, **kwargs)
+        return db.drivers.register(driver, name)
 
 
 from db.drivers import sqlite3x

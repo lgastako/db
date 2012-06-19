@@ -18,6 +18,39 @@ CREATE_FOO_SQL = """CREATE TABLE foo (
                  """
 
 
+class TestConn(object):
+
+    def rollback(self):
+        pass
+
+    def commit(self):
+        pass
+
+
+class TestCursorException(Exception):
+    pass
+
+
+class TestCursor(object):
+
+    def __init__(self, msg="Forced Test Exception", called=0):
+        self.called = called
+        self.msg = msg
+
+    def execute(self, *args, **kwargs):
+        pass
+
+    def fetchall(self):
+        self.called += 1
+        raise TestCursorException(self.msg)
+
+
+class TestDriver(db.drivers.Driver):
+
+    def ignore_exception(self, _ex):
+        return "Forced Test Exception" in str(_ex)
+
+
 class ExampleDBTests(object):
 
     def setup_method(self, method):
@@ -75,6 +108,25 @@ class ItemsTests(ExampleDBTests):
         row = rows[1]
         assert row.foo_id == 2
         assert row.value == 'bar'
+
+
+class TestExceptionIgnoring(ExampleDBTests):
+
+    def test_appropriate_exceptions_are_ignored(self):
+        testdb = TestDriver.register("foo", "testdb")
+        test_cursor = TestCursor()
+
+        testdb.items("SELECT * FROM foo",
+                     _conn=TestConn(),
+                     _cursor=test_cursor)
+        assert test_cursor.called == 1
+
+    def test_inappropriate_exceptions_are_propagated(self):
+        testdb = TestDriver.register("foo", "testdb")
+        with pytest.raises(TestCursorException):
+            testdb.items("SELECT * FROM foo",
+                         _conn=TestConn(),
+                         _cursor=TestCursor("foo"))
 
 
 class CountTests(ExampleDBTests):

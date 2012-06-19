@@ -60,17 +60,14 @@ class Database(object):
             yield cursor
 
     def items(self, sql, *args, **kwargs):
-        conn = kwargs.pop("_conn", None)
-        cursor = kwargs.pop("_cursor", None)
-
-        with self.tx(conn, cursor) as cursor:
-            kwargs["paramstyle"] = self.driver.PARAM_STYLE
+        with self.tx(*args, **kwargs) as cursor:
+            kwargs.setdefault("paramstyle", self.driver.PARAM_STYLE)
             execute(cursor, sql, *args, **kwargs)
             try:
                 results = cursor.fetchall()
             except Exception, ex:
                 results = None
-                if not driver.handle_exception(ex):
+                if not self.driver.ignore_exception(ex):
                     raise
         return results
 
