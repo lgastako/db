@@ -1,5 +1,4 @@
 import pytest
-import sqlite3
 
 import db
 
@@ -90,7 +89,7 @@ class TestGet(DriverTests):
         self.install_one_driver()
         default_db = db.get()
         with pytest.raises(KeyError):
-            db.items("SELECT * FROM foo")
+            default_db.items("SELECT * FROM foo")
 
     def test_named_one_named_driver(self):
         self.install_one_driver()

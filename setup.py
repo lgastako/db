@@ -2,7 +2,6 @@
 
 import setuptools  # for side-effects to make 'python setup.py develop' work
 from setuptools import setup
-from setuptools import Command
 
 
 if __name__ == "__main__":

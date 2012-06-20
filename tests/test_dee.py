@@ -1,5 +1,6 @@
 try:
     from Dee import Relation
+    Relation()
     DEE = True
 except ImportError:
     DEE = False

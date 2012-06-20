@@ -1,6 +1,5 @@
 import sqlite3
 
-import db
 from db.drivers import Driver
 
 from collections import namedtuple

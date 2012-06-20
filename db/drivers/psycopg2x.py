@@ -1,4 +1,3 @@
-import db
 from db.drivers import Driver
 
 try:
@@ -25,4 +24,7 @@ try:
     register = PostgresDriver.register
 
 except ImportError:
-    from missing import *
+    from missing import connect
+    from missing import register
+
+all = [connect.__name__, register.__name__]

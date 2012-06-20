@@ -1,8 +1,4 @@
-import urlparse
-
 import db
-
-from functools import partial
 
 # A mapping from a name to a function that, given no arguments, "checks out"
 # a connection (or creates one if it's not a pool) and given a connection

@@ -1,7 +1,5 @@
 from functools import partial
 
-import sqlite3
-
 import pytest
 
 import db
