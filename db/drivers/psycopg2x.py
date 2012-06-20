@@ -7,6 +7,8 @@ try:
 
     def connect(*args, **kwargs):
         kwargs["connection_factory"] = psycopg2.extras.NamedTupleConnection
+        import logging
+        logging.info("Creating connection to: %s %s",  args, kwargs)
         conn = psycopg2.connect(*args, **kwargs)
         return conn
 

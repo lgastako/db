@@ -241,3 +241,63 @@ class TestMultipleDatabases(ExampleDBTests):
 
         assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
+
+    def test_create_and_connect_to_two_separately_default(self):
+        db1 = db.drivers.sqlite3x.register(":memory:")
+        db2 = db.drivers.sqlite3x.register(":memory:", "db2")
+
+        db1.do(CREATE_FOO_SQL)
+        db2.do(CREATE_FOO_SQL)
+
+        db1.do("INSERT INTO foo (value) VALUES (1)")
+        db1.do("INSERT INTO foo (value) VALUES (2)")
+        db1.do("INSERT INTO foo (value) VALUES (3)")
+
+        db2.do("INSERT INTO foo (value) VALUES (4)")
+        db2.do("INSERT INTO foo (value) VALUES (5)")
+        db2.do("INSERT INTO foo (value) VALUES (6)")
+
+        assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
+        assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
+
+    def test_create_and_connect_to_two_separately_default_first(self):
+        db.drivers.sqlite3x.register(":memory:")
+        db.drivers.sqlite3x.register(":memory:", "db2")
+
+        db1 = db.get()
+        db2 = db.get("db2")
+
+        db1.do(CREATE_FOO_SQL)
+        db2.do(CREATE_FOO_SQL)
+
+        db1.do("INSERT INTO foo (value) VALUES (1)")
+        db1.do("INSERT INTO foo (value) VALUES (2)")
+        db1.do("INSERT INTO foo (value) VALUES (3)")
+
+        db2.do("INSERT INTO foo (value) VALUES (4)")
+        db2.do("INSERT INTO foo (value) VALUES (5)")
+        db2.do("INSERT INTO foo (value) VALUES (6)")
+
+        assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
+        assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
+
+    def test_create_and_connect_to_two_separately_default_second(self):
+        db.drivers.sqlite3x.register(":memory:", "db1")
+        db.drivers.sqlite3x.register(":memory:")
+
+        db1 = db.get("db1")
+        db2 = db.get()
+
+        db1.do(CREATE_FOO_SQL)
+        db2.do(CREATE_FOO_SQL)
+
+        db1.do("INSERT INTO foo (value) VALUES (1)")
+        db1.do("INSERT INTO foo (value) VALUES (2)")
+        db1.do("INSERT INTO foo (value) VALUES (3)")
+
+        db2.do("INSERT INTO foo (value) VALUES (4)")
+        db2.do("INSERT INTO foo (value) VALUES (5)")
+        db2.do("INSERT INTO foo (value) VALUES (6)")
+
+        assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
+        assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
