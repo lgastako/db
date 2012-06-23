@@ -142,6 +142,9 @@ class DefaultDatabase(object):
     def tx(self, *args, **kwargs):
         return self._getdb().tx(*args, **kwargs)
 
+    def txc(self, *args, **kwargs):
+        return self._getdb().txc(*args, **kwargs)
+
     def items(self, *args, **kwargs):
         return self._getdb().items(*args, **kwargs)
 
@@ -170,6 +173,7 @@ class DefaultDatabase(object):
 defaultdb = DefaultDatabase()
 
 tx = defaultdb.tx
+txc = defaultdb.txc
 items = defaultdb.items
 item = defaultdb.item
 relation = defaultdb.relation
