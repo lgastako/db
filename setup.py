@@ -6,7 +6,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(name="db",
-          version="0.0.1",
+          version="0.0.2",
           description="Databases for Humans",
           author="John Evans",
           author_email="lgastako@gmail.com",
