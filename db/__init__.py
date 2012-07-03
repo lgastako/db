@@ -139,6 +139,9 @@ class DefaultDatabase(object):
     def _getdb(self):
         return get()
 
+    def connect(self, *args, **kwargs):
+        return self._getdb().connect(*args, **kwargs)
+
     def tx(self, *args, **kwargs):
         return self._getdb().tx(*args, **kwargs)
 
@@ -172,6 +175,7 @@ class DefaultDatabase(object):
 
 defaultdb = DefaultDatabase()
 
+connect = defaultdb.connect
 tx = defaultdb.tx
 txc = defaultdb.txc
 items = defaultdb.items
@@ -186,6 +190,7 @@ rel_count = defaultdb.rel_count
 import drivers
 
 __all__ = [
+    "connect",
     "tx",
     "txc",
     "do",
