@@ -13,5 +13,8 @@ class AntipoolDriver(Driver):
     def connect(self):
         return self.pool.connection()
 
+    def ignore_exception(self, ex):
+        return "no results to fetch" in str(ex)
+
 
 register = AntipoolDriver.register
