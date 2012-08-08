@@ -27,9 +27,9 @@ class Sqlite3Driver(Driver):
 
     PARAM_STYLE = "qmark"
 
-    def __init__(self, conn_string, **kwargs):
-        super(Sqlite3Driver, self).__init__(conn_string)
-        self.conn = connect(self.conn_string, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(Sqlite3Driver, self).__init__(*args, **kwargs)
+        self.conn = connect(*self.conn_args, **self.conn_kwargs)
 
     def connect(self):
         return self.conn

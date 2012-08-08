@@ -12,8 +12,8 @@ class DriverTests(object):
 
         class TestDriver(db.drivers.Driver):
 
-            def __init__(self, conn_string, *args, **kwargs):
-                super(TestDriver, self).__init__(conn_string)
+            def __init__(self, *args, **kwargs):
+                super(TestDriver, self).__init__(*args, **kwargs)
                 self.driver_label = label
                 self.invocations = []
 

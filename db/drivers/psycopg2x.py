@@ -16,7 +16,7 @@ try:
         PARAM_STYLE = "pyformat"
 
         def connect(self):
-            return connect(self.conn_string)
+            return connect(*self.conn_args, **self.conn_kwargs)
 
         def ignore_exception(self, ex):
             return "no results to fetch" in str(ex)

@@ -34,8 +34,9 @@ def count():
 class Driver(object):
     PARAM_STYLE = "pyformat"
 
-    def __init__(self, conn_string):
-        self.conn_string = conn_string
+    def __init__(self, *args, **kwargs):
+        self.conn_args = args
+        self.conn_kwargs = kwargs
 
     def connect(self):
         raise NotImplementedError
@@ -58,6 +59,7 @@ class Driver(object):
 
 from db.drivers import sqlite3x
 from db.drivers import psycopg2x
+from db.drivers import antipoolx
 
 __all__ = [
     "get",
@@ -68,5 +70,6 @@ __all__ = [
     "Driver",
     # Drivers
     "sqlite3x",
-    "psycopg2x"
+    "psycopg2x",
+    "antipoolx"
 ]
