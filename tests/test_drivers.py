@@ -28,7 +28,8 @@ class DriverTests(object):
     def install_one_driver(self):
         db.drivers.clear()
         self.only_db = \
-            db.drivers.register(self.make_driver("connect_one_only"), "only")
+            db.drivers.register(self.make_driver("connect_one_only"),
+                                driver_name="only")
 
     def install_one_default_driver(self):
         db.drivers.clear()
@@ -39,10 +40,10 @@ class DriverTests(object):
         db.drivers.clear()
         self.first_db = \
             db.drivers.register(
-                self.make_driver("connect_two_first"), "first")
+                self.make_driver("connect_two_first"), driver_name="first")
         self.second_db = \
             db.drivers.register(
-                self.make_driver("connect_two_second"), "second")
+                self.make_driver("connect_two_second"), driver_name="second")
 
 
 class TestCount(DriverTests):
@@ -107,7 +108,8 @@ class TestGet(DriverTests):
 class TestMisc(DriverTests):
 
     def test_registering_returns_db(self):
-        test_db = db.drivers.sqlite3x.register(":memory:", "test_db")
+        test_db = db.drivers.sqlite3x.register(":memory:",
+                                               driver_name="test_db")
 
         assert test_db is not None
 

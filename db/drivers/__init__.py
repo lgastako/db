@@ -50,9 +50,10 @@ class Driver(object):
         pass
 
     @classmethod
-    def register(cls, conn_string, name=None, **kwargs):
-        driver = cls(conn_string, **kwargs)
-        return db.drivers.register(driver, name)
+    def register(cls, *args, **kwargs):
+        driver_name = kwargs.pop("driver_name", None)
+        driver = cls(*args, **kwargs)
+        return db.drivers.register(driver, driver_name=driver_name)
 
 
 from db.drivers import sqlite3x

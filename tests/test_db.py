@@ -111,7 +111,7 @@ class ItemsTests(ExampleDBTests):
 class TestExceptionIgnoring(ExampleDBTests):
 
     def test_appropriate_exceptions_are_ignored(self):
-        testdb = TestDriver.register("foo", "testdb")
+        testdb = TestDriver.register("foo", driver_name="testdb")
         test_cursor = TestCursor()
 
         testdb.items("SELECT * FROM foo",
@@ -120,7 +120,7 @@ class TestExceptionIgnoring(ExampleDBTests):
         assert test_cursor.called == 1
 
     def test_inappropriate_exceptions_are_propagated(self):
-        testdb = TestDriver.register("foo", "testdb")
+        testdb = TestDriver.register("foo", driver_name="testdb")
         with pytest.raises(TestCursorException):
             testdb.items("SELECT * FROM foo",
                          _conn=TestConn(),
@@ -223,8 +223,8 @@ class TestCountImplicit(ImplicitConnection, CountTests):
 class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
-        db1 = db.drivers.sqlite3x.register(":memory:", "db1")
-        db2 = db.drivers.sqlite3x.register(":memory:", "db2")
+        db1 = db.drivers.sqlite3x.register(":memory:", driver_name="db1")
+        db2 = db.drivers.sqlite3x.register(":memory:", driver_name="db2")
 
         db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)
@@ -242,7 +242,7 @@ class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately_default(self):
         db1 = db.drivers.sqlite3x.register(":memory:")
-        db2 = db.drivers.sqlite3x.register(":memory:", "db2")
+        db2 = db.drivers.sqlite3x.register(":memory:", driver_name="db2")
 
         db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)
@@ -260,7 +260,7 @@ class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately_default_first(self):
         db.drivers.sqlite3x.register(":memory:")
-        db.drivers.sqlite3x.register(":memory:", "db2")
+        db.drivers.sqlite3x.register(":memory:", driver_name="db2")
 
         db1 = db.get()
         db2 = db.get("db2")
@@ -280,7 +280,7 @@ class TestMultipleDatabases(ExampleDBTests):
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
 
     def test_create_and_connect_to_two_separately_default_second(self):
-        db.drivers.sqlite3x.register(":memory:", "db1")
+        db.drivers.sqlite3x.register(":memory:", driver_name="db1")
         db.drivers.sqlite3x.register(":memory:")
 
         db1 = db.get("db1")
