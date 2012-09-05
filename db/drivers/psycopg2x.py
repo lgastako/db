@@ -3,6 +3,7 @@ from db.drivers import Driver
 try:
     import psycopg2
     import psycopg2.extras
+    import psycopg2.extensions
 
     def connect(*args, **kwargs):
         kwargs["connection_factory"] = psycopg2.extras.NamedTupleConnection
@@ -20,6 +21,10 @@ try:
 
         def ignore_exception(self, ex):
             return "no results to fetch" in str(ex)
+
+        def setup_cursor(self, cursor):
+            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE,
+                                              cursor)
 
     register = PostgresDriver.register
 

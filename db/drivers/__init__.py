@@ -45,7 +45,12 @@ class Driver(object):
         return False
 
     def cursor(self, conn):
-        return conn.cursor()
+        cursor = conn.cursor()
+        self.setup_cursor(cursor)
+        return cursor
+
+    def setup_cursor(self, cursor):
+        pass
 
     def release(self):
         pass
