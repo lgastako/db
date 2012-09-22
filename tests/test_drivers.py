@@ -5,8 +5,8 @@ import db
 
 class DriverTests(object):
 
-    def clear_drivers(self):
-        db.drivers._DRIVERS = {}
+    def setup_method(self, method):
+        db.clear()
 
     def make_driver(self, label):
 
@@ -26,18 +26,15 @@ class DriverTests(object):
         return driver
 
     def install_one_driver(self):
-        db.drivers.clear()
         self.only_db = \
             db.drivers.register(self.make_driver("connect_one_only"),
                                 driver_name="only")
 
     def install_one_default_driver(self):
-        db.drivers.clear()
         self.default_db = \
             db.drivers.register(self.make_driver("connect_default_only"))
 
     def install_two_drivers(self):
-        db.drivers.clear()
         self.first_db = \
             db.drivers.register(
                 self.make_driver("connect_two_first"), driver_name="first")
@@ -49,7 +46,6 @@ class DriverTests(object):
 class TestCount(DriverTests):
 
     def test_none(self):
-        self.clear_drivers()
         assert db.drivers.count() == 0
 
     def test_one(self):
@@ -64,18 +60,16 @@ class TestCount(DriverTests):
 class TestClear(DriverTests):
 
     def test_already_clear(self):
-        self.clear_drivers()
-        db.drivers.clear()
         assert db.drivers.count() == 0
 
     def test_not_already_clear(self):
         self.install_one_driver()
-        db.drivers.clear()
+        db.clear()
         assert db.drivers.count() == 0
 
     def test_not_already_clear_multiple(self):
         self.install_two_drivers()
-        db.drivers.clear()
+        db.clear()
         assert db.drivers.count() == 0
 
 

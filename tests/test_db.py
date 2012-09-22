@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 import db
-
+RAW = db.RAW
 
 #########################
 # BASE TEST DEFINITIONS #
@@ -52,7 +52,7 @@ class TestDriver(db.drivers.Driver):
 class ExampleDBTests(object):
 
     def setup_method(self, method):
-        db.drivers.clear()
+        db.clear()
         db.drivers.sqlite3x.register(":memory:")
         db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
@@ -151,6 +151,37 @@ class CountTests(ExampleDBTests):
         db.do("INSERT INTO bar VALUES (4, 'bim')")
 
         assert self.count("foo, bar WHERE foo.value = bar.value") == 2
+
+
+class TestAutoCalls(ExampleDBTests):
+    EXPECTED_VALUE = "2004-08-19 18:51:06"
+
+    # We DRY these up so that this test will always ensure that the
+    # same call that succeeds when auto calls are enabled also fails
+    # when they are not.
+    def make_example_instance_call_value(self):
+        return self.db.c.datetime(1092941466, 'unixepoch')
+
+    def make_example_instance_call_set(self):
+        return self.db.cs.select(RAW('11 AS value'),
+                                 iparens=False,
+                                 oparens=True)
+
+    def make_example_module_call_value(self):
+        return db.c.datetime(1092941466, 'unixepoch')
+
+    def test_auto_call_on_db_instance_value(self):
+        actual = self.make_example_instance_call_value()
+        assert actual == self.EXPECTED_VALUE
+
+    def test_auto_call_on_db_module_set(self):
+        actual = self.make_example_instance_call_set()
+        assert len(actual) == 1
+        assert actual[0].value == 11
+
+    def test_auto_call_on_db_module_value(self):
+        actual = self.make_example_module_call_value()
+        assert actual == self.EXPECTED_VALUE
 
 
 ############

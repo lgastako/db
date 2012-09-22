@@ -22,11 +22,6 @@ def deregister(driver_name):
     del _DRIVERS[driver_name]
 
 
-def clear():
-    global _DRIVERS
-    _DRIVERS = {}
-
-
 def count():
     return len(_DRIVERS)
 
@@ -70,7 +65,6 @@ __all__ = [
     "get",
     "register",
     "deregister",
-    "clear",
     "connect",
     "Driver",
     # Drivers

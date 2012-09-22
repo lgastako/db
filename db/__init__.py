@@ -19,6 +19,79 @@ class UnexpectedCardinality(DBError):
     pass
 
 
+class CallProxy(object):
+
+    def __init__(self, target, attr_name, cb, names):
+        self.target = target
+        self.attr_name = attr_name
+        self.cb = cb
+        self.names = names
+
+    def __getattr__(self, name):
+        return self.__class__(self.target,
+                              self.attr_name,
+                              self.cb,
+                              self.names + [name])
+
+    def __call__(self, *args, **kwargs):
+        iparens = kwargs.pop("iparens", True)
+        oparens = kwargs.pop("oparens", False)
+        db_inst = self.cb(self.target[self.attr_name])
+        param_components = []
+        param_values = []
+        for arg in args:
+            if isinstance(arg, RAW):
+                param_components.append(str(arg))
+                param_values.extend(arg.values)
+            else:
+                param_components.append("%X")
+                param_values.append(arg)
+
+        param_template = ", ".join(param_components)
+        name = ".".join(self.names)
+
+        results = self._get_results(db_inst,
+                                    name,
+                                    param_template,
+                                    param_values,
+                                    iparens,
+                                    oparens)
+        return results
+
+    def _get_results(self, db_inst, name, param_template, values,
+        iparens, oparens):
+        raise NotImplementedError
+
+
+class CProxy(CallProxy):
+
+    def _get_results(self, db_inst, name, param_template, values,
+        iparens,
+        oparens):
+        if iparens:
+            sql = "SELECT %s(%s) AS value" % (name, param_template)
+        else:
+            sql = "SELECT %s %s" % (name, param_template)
+        return db_inst.item(sql, *values).value
+
+
+class CSProxy(CallProxy):
+
+    def _get_results(self, db_inst, name, param_template, values,
+        iparens, oparens):
+        if iparens:
+            f_call = "%s(%s)"
+        else:
+            f_call = "%s %s"
+        clause = f_call
+        if oparens:
+            clause = "(%s)" % clause
+        clause = clause % (name, param_template)
+        sql = "SELECT * FROM %s AS tmp" % clause
+        results = db_inst.items(sql, *values)
+        return results
+
+
 class Database(object):
 
     def __init__(self, driver_name=None):
@@ -125,6 +198,16 @@ class Database(object):
         rel = self.relation(sql, *args, **kwargs)
         return rel
 
+    @property
+    def c(self):
+        # TODO: Cache?
+        return CProxy(locals(), "self", lambda db: db, [])
+
+    @property
+    def cs(self):
+        # TODO: Cache?
+        return CSProxy(locals(), "self", lambda db: db, [])
+
 
 def get(driver_name=None):
     return Database(driver_name)
@@ -136,8 +219,13 @@ def put(database):
 
 class DefaultDatabase(object):
 
+    def __init__(self):
+        self._db = None
+
     def _getdb(self):
-        return get()
+        if not self._db:
+            self._db = get()
+        return self._db
 
     def connect(self, *args, **kwargs):
         return self._getdb().connect(*args, **kwargs)
@@ -172,24 +260,66 @@ class DefaultDatabase(object):
     def rel_count(self, *args, **kwargs):
         return self._getdb().rel_count(*args, **kwargs)
 
+    def __getattribute__(self, name):
+        try:
+            return super(DefaultDatabase, self).__getattribute__(name)
+        except AttributeError:
+            if name.startswith("_"):
+                raise
+            try:
+                db_ = self._getdb()
+                return getattr(db_, name)
+            except AttributeError:
+                raise "Boom"
+
 
 defaultdb = DefaultDatabase()
 
-connect = defaultdb.connect
-tx = defaultdb.tx
-txc = defaultdb.txc
-items = defaultdb.items
-item = defaultdb.item
-relation = defaultdb.relation
-tuple = defaultdb.tuple
-do = defaultdb.do
-first = defaultdb.first
-count = defaultdb.count
-rel_count = defaultdb.rel_count
+
+def clear():
+    global defaultdb
+    defaultdb = DefaultDatabase()
+    drivers._DRIVERS = {}
+
 
 import drivers
+import deesupport
+
+connect = lambda *a, **kw: defaultdb.connect(*a, **kw)
+tx = lambda *a, **kw: defaultdb.tx(*a, **kw)
+txc = lambda *a, **kw: defaultdb.txc(*a, **kw)
+do = lambda *a, **kw: defaultdb.do(*a, **kw)
+item = lambda *a, **kw: defaultdb.item(*a, **kw)
+items = lambda *a, **kw: defaultdb.items(*a, **kw)
+relation = lambda *a, **kw: defaultdb.relation(*a, **kw)
+tuple = lambda *a, **kw: defaultdb.tuple(*a, **kw)
+count = lambda *a, **kw: defaultdb.count(*a, **kw)
+rel_count = lambda *a, **kw: defaultdb.rel_count(*a, **kw)
+first = lambda *a, **kw: defaultdb.first
+
+
+c = CProxy(globals(), "defaultdb", lambda db: db._getdb(), [])
+cs = CSProxy(globals(), "defaultdb", lambda db: db._getdb(), [])
+
+
+class RAW(object):
+
+    def __init__(self, raw_str, *values):
+        self.raw_str = raw_str
+        self.values = values
+
+    def __str__(self):
+        return str(self.raw_str)
+
 
 __all__ = [
+    "from_",
+    "drivers",
+    "deesupport",
+    "get",
+    "put",
+    "clear",
+    "defaultdb"
     "connect",
     "tx",
     "txc",
@@ -201,5 +331,4 @@ __all__ = [
     "count",
     "rel_count",
     "first",
-    "drivers",
 ]
