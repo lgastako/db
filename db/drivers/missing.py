@@ -5,8 +5,12 @@
 from db.drivers import Driver
 
 
+class DriverMissing(Exception):
+    pass
+
+
 def connect(*args, **kwargs):
-    raise NotImplementedError
+    raise DriverMissing
 
 
 class MissingDriver(Driver):
