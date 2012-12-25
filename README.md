@@ -12,55 +12,71 @@ not, and never will be, an attempt at an ORM.
 Basic Usage
 -----------
 
-    import db
 
-    db.do("DELETE FROM products")
-    db.do("INSERT INTO products (name, price) VALUES ('iPod', 69.99)")
-    print db.item("SELECT COUNT(*) FROM products").count
-    # 1
-    products = db.items("SELECT * FROM products")
-    print len(products)
-    # 1
-    product = products[0]
-    print product.name
-    # "iPod"
+    >>> import db
+    >>> db.drivers.psycopg2x.register("dbname=example user=exuser password=pw")
+    <db.Database object at 0x102591e90>
+    >>> row = db.item("SELECT * FROM examples")
+    >>> row.example_id
+    10
+    >>> row.example_name
+    u'This is example ID 10'
 
 
-Due to the use of db.do/item/items, each SQL statement in the above example
-was executed in a separate transaction.
+Note that the use of db.do and db.item without an explicit transaction
+block will create a new transaction for each statement.  
 
 
 Basic Transactions 
 ------------------
 
-    import db
+To explicitly control transactions, use a with block with the transaction
+context manager:
 
-    with db.tx() as cx:
-        # transaction is opened here, and commited at the end of the with
-        # block automatically.  If a rollback is issued, it will return
-        # with no error, but if the transaction aborts and is rolled back
-        # then the with block will raise the appropriate exception.
-        cx.execute("SELECT val1 FROM foo")
-        row = cx.fetchone()
-        val1 = row[0]
-        cx.execute("INSERT INTO bar (val) VALUES (%X)", val1);
+    >>> with db.tx() as tx:
+    ...     row = tx.item("SELECT * FROM examples")
+    ...     tx.do("INSERT INTO examples (name) VALUES ('foo')")
+    ... 
+    >>> row.id
+    >>> row.example_id
+    10
 
-
-So far we've been getting our database connections automatically.  What's
-happening behind the scenes is that the do, item(s), etc functions that
-exist right on the db module all operate on the default database.
+In this case, a new transaction wraps the with block.  If the transaction
+issues a ROLLBACK statement, the with block will return with no error, but
+if the transaction aborts causing a rollback, then the with block will raise
+the appropriate exception.
 
 
 Multiple Databases
 ------------------
 
-You can get a specific database by name:
+In the example at the top we registered a single database driver and since
+then every interaction we've had with the db module has used this default
+driver to obtain a connection.
 
-    foo_db = db.get("foo_db")
+You can register multiple databases by providing a name for any non-default
+databases:
 
-And use all of the same functions on it:
+    >>> tweetsdb = db.drivers.psycopg2x.register("dbname=tweets user=tweeter password=pw140", "tweetsdb")
+    >>> imagesdb = db.drivers.psycopg2x.register("dbname=images user=dsgnr password=pretty", "imagesdb")
 
-    foo.db.items("SELECT COUNT(*) AS n FROM foos").n
+You can get a specific database by name later:
+
+    >>> tweetsdb = db.get("tweetsdb")
+    >>> imagesdb = db.get("imagesdb")
+
+And use all of the same functions on them:
+
+    >>> row = tweetsdb.item("SELECT * FROM tweet_examples")
+    >>> row.example_id
+    11
+
+    >>> with imagesdb.tx() as tx:
+    ...     row = tx.item("SELECT * FROM image_examples")
+    ...     tx.do("INSERT INTO image_examples (name) VALUES ('bar')")
+    ... 
+    >>> row.example_id
+    11
 
 etc.
 

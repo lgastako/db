@@ -153,6 +153,32 @@ class CountTests(ExampleDBTests):
         assert self.count("foo, bar WHERE foo.value = bar.value") == 2
 
 
+class TransactionTests(ExampleDBTests):
+
+    def test_basic_successful_tx(self):
+        with db.tx() as tx:
+            tx.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
+            tx.do("INSERT INTO foo (foo_id, value) VALUES (3, 'baz')")
+
+        rows = db.items("SELECT * FROM foo ORDER BY foo_id")
+        assert len(rows) == 3
+        for index, row in enumerate(rows):
+            assert row.foo_id == index + 1
+        assert rows[2].value == "baz"
+
+    def test_basic_rollback(self):
+        try:
+            with db.tx() as tx:
+                tx.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
+                tx.do("BAD STATEMENT")
+        except Exception:
+            pass
+
+        row = db.item("SELECT * FROM foo")
+        assert row.foo_id == 1
+        assert row.value == "foo"
+
+
 ############
 # CONTEXTS #
 ############
@@ -213,6 +239,14 @@ class TestCountExplicit(ExplicitConnection, CountTests):
 
 
 class TestCountImplicit(ImplicitConnection, CountTests):
+    pass
+
+
+class TestTransctionsExplicit(ExplicitConnection, TransactionTests):
+    pass
+
+
+class TestTransctionsImplicit(ImplicitConnection, TransactionTests):
     pass
 
 
