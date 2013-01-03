@@ -6,12 +6,9 @@ try:
     import psycopg2.extensions
 
     def connect(*args, **kwargs):
-        search_path = kwargs.pop("search_path", None)
         kwargs.setdefault("connection_factory",
                           psycopg2.extras.NamedTupleConnection)
         conn = psycopg2.connect(*args, **kwargs)
-        if search_path:
-            conn.cursor().execute("SET search_path = %s" % search_path)
         return conn
 
     class PostgresDriver(Driver):
