@@ -89,7 +89,7 @@ class TestGet(DriverTests):
     def test_default_one_non_default_driver(self):
         self.install_one_driver()
         default_db = db.get()
-        with pytest.raises(KeyError):
+        with pytest.raises(db.NoDefaultDatabase):
             default_db.items("SELECT * FROM foo")
 
     def test_named_one_named_driver(self):
@@ -103,6 +103,12 @@ class TestGet(DriverTests):
         assert first_db.driver.driver_label == "connect_two_first"
         second_db = db.get("second")
         assert second_db.driver.driver_label == "connect_two_second"
+
+    def test_no_such_db(self):
+        # TODO: Is lazy the right behavior here?
+        lazy = db.get("does_not_exist")
+        with pytest.raises(db.NoSuchDatabase):
+            lazy.do("SELECT 1")
 
 
 class TestMisc(DriverTests):

@@ -10,7 +10,13 @@ _DRIVERS = {}
 
 
 def get(driver_name=None):
-    return _DRIVERS[driver_name]
+    try:
+        return _DRIVERS[driver_name]
+    except KeyError:
+        if driver_name is None:
+            raise db.NoDefaultDatabase()
+        else:
+            raise db.NoSuchDatabase(driver_name)
 
 
 def register(driver, driver_name=None):

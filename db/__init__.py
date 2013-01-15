@@ -20,6 +20,14 @@ class UnexpectedCardinality(DBError):
     pass
 
 
+class NoDefaultDatabase(DBError):
+    pass
+
+
+class NoSuchDatabase(DBError):
+    pass
+
+
 class Transaction(object):
 
     def __init__(self, db, conn, cursor):
