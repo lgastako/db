@@ -3,18 +3,21 @@
 # installed.
 
 from db.drivers import Driver
+from db import DBError
 
 
-class DriverMissing(Exception):
+class NativeDriverMissing(DBError):
     pass
 
 
 def connect(*args, **kwargs):
-    raise DriverMissing
+    raise NativeDriverMissing
 
 
-class MissingDriver(Driver):
-    pass
+class MissingNativeDriver(Driver):
+
+    def connect(self):
+        return connect()
 
 
-register = MissingDriver.register
+register = MissingNativeDriver.register

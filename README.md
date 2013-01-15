@@ -95,8 +95,35 @@ connection/cursors are NamedTupleCursors (e.g by setting the appropriate
 flag on the connection object or returning a wrapped connection that
 sets the appropriate flag on .cursor calls, etc).
 
+This section is slightly out of date, in that the built in drivers now
+use a class style of driver, but this may change so I'll update this section
+once I've decided what the final default style will be (before 1.0)
 
-NEW! Experimental support for Dee.
+
+Exceptions:
+-----------
+
+Currently there are four custom exceptions that the db module might raise,
+all of which are a subclass of db.DBError (which currently is never raised
+directly):
+
+    NoDefaultDatabase - Raised when an attempt to access the default database
+                        is made before a driver is registered for the
+                        default database.
+
+    NoSuchDatabase - Raised when an attempt to access a named database is made
+                     but no driver has been registered for that name.
+
+    MissingNativeDriver - Raised when the underlying native driver cannot
+                          be found (e.g. psycopg2x can't find psycopg2).
+
+    UnexpectedCardinality - Raised when .one() or .tuple() is called and
+                            the query returns more or less than 1 result.
+                            Taking suggestions for a better name before 1.0
+                            release sets it in stone :)
+
+
+Experimental support for Dee.
 ----------------------------------
 
 items -> relation
@@ -107,5 +134,4 @@ TODO
 ----
 
 - Nested transactions
-- Documentation
 - Website
