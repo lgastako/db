@@ -2,7 +2,7 @@ db
 ==
 
 A more programmer friendly interface to databases inspired by Kenneth Reitz's
-"requests" library.  
+"requests" library.
 
 I've got a long way to go but I'm using this code in a number of projects
 already so I figured I'd put it out there.  Also please note that this is
@@ -24,10 +24,22 @@ Basic Usage
 
 
 Note that the use of db.do and db.item without an explicit transaction
-block will create a new transaction for each statement.  
+block will create a new transaction for each statement.
 
 
-Basic Transactions 
+Bind Parameters
+---------------
+db uses the execute_f method from the dbapiext module of Martin Blais' antiorm
+project to handle parameter binding, so you get all the benefits discussed
+in his presentation here:
+
+    http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
+
+The short story is that you use %X (or %(name)X for named parameters) to
+auto-escape values.
+
+
+Basic Transactions
 ------------------
 
 To explicitly control transactions, use a with block with the transaction
@@ -36,7 +48,7 @@ context manager:
     >>> with db.tx() as tx:
     ...     row = tx.item("SELECT * FROM examples")
     ...     tx.do("INSERT INTO examples (name) VALUES ('foo')")
-    ... 
+    ...
     >>> row.id
     >>> row.example_id
     10
@@ -74,7 +86,7 @@ And use all of the same functions on them:
     >>> with imagesdb.tx() as tx:
     ...     row = tx.item("SELECT * FROM image_examples")
     ...     tx.do("INSERT INTO image_examples (name) VALUES ('bar')")
-    ... 
+    ...
     >>> row.example_id
     11
 
