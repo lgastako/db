@@ -1,5 +1,7 @@
+import urlparse
 import logging
 import string
+import os
 
 from contextlib import contextmanager
 from functools import wraps
@@ -8,8 +10,9 @@ from dbapiext import execute_f as execute
 
 logger = logging.getLogger(__name__)
 
+_TABLE_NAME_CHARS = frozenset(string.ascii_letters + string.digits + "_.")
 
-TABLE_NAME_CHARS = frozenset(string.ascii_letters + string.digits + "_.")
+_NAMED_DRIVERS = {}
 
 
 class DBError(Exception):
@@ -28,6 +31,54 @@ class NoSuchDatabase(DBError):
     pass
 
 
+class NoDriverForURL(DBError):
+    pass
+
+
+def from_environ(envvar="DATABASE_URL", db_name=None):
+    url = os.environ[envvar]
+    return from_url(url, db_name=db_name)
+
+
+def from_url(url, db_name=None):
+    #from db import drivers as _drivers
+    parsed = urlparse.urlparse(url)
+    try:
+        driver_class = drivers._DRIVERS[parsed.scheme]
+    except KeyError:
+        raise NoDriverForURL(url)
+    driver = driver_class.from_url(url)
+    return register(driver, db_name=db_name)
+
+
+def register(driver, db_name=None):
+    _NAMED_DRIVERS[db_name] = driver
+    return get(db_name)
+
+
+def unregister(db_name):
+    del _NAMED_DRIVERS[db_name]
+
+
+def get_driver(db_name=None):
+    try:
+        return _NAMED_DRIVERS[db_name]
+    except KeyError:
+        if db_name is None:
+            raise NoDefaultDatabase()
+        else:
+            raise NoSuchDatabase(db_name)
+
+
+def clear():
+    global _NAMED_DRIVERS
+    _NAMED_DRIVERS = {}
+
+
+def count_dbs():
+    return len(_NAMED_DRIVERS)
+
+
 class Transaction(object):
 
     def __init__(self, db, conn, cursor):
@@ -38,13 +89,14 @@ class Transaction(object):
     def items(self, sql, *args, **kwargs):
         kwargs.setdefault("paramstyle", self.db.driver.PARAM_STYLE)
         execute(self.cursor, sql, *args, **kwargs)
+        self.db.driver.fixup_cursor(self.cursor)
         try:
             results = self.cursor.fetchall()
         except Exception, ex:
             results = None
             if not self.db.driver.ignore_exception(ex):
                 raise
-        return results
+        return self.db.driver.wrap_results(self.cursor, results)
 
     def item(self, sql, *args, **kwargs):
         results = self.items(sql, *args, **kwargs)
@@ -53,23 +105,6 @@ class Transaction(object):
             raise UnexpectedCardinality(
                 "Expected exactly one item but got %d." % num_results)
         return results[0]
-
-    def relation(self, sql, *args, **kwargs):
-        import deesupport
-        if len(kwargs) == 0 and len(args) == 0 and \
-                all(map(lambda c: c in TABLE_NAME_CHARS, sql)):
-            sql = "SELECT * FROM %s" % sql
-        rows = self.items(sql, *args, **kwargs)
-        rel = deesupport.rows_to_relation(rows)
-        return rel
-
-    def tuple(self, sql, *args, **kwargs):
-        rel = self.relation(sql, *args, **kwargs)
-        num_tuples = len(rel)
-        if num_tuples != 1:
-            raise UnexpectedCardinality(
-                "Expected exactly one tuple but got %d." % num_tuples)
-        return rel.toTuple()
 
     do = items
 
@@ -86,18 +121,18 @@ class Transaction(object):
 
     @staticmethod
     def _count_name(from_plus):
-        if any(map(lambda c: c not in TABLE_NAME_CHARS, from_plus)):
+        if any(map(lambda c: c not in _TABLE_NAME_CHARS, from_plus)):
             left = from_plus.split(" WHERE ", 1)[0]
             normalized_name = left.replace(" ", "_").replace(",", "")
         else:
             normalized_name = from_plus
         return normalized_name + "_count"
 
-    def rel_count(self, from_plus, count_name=None, *args, **kwargs):
-        if count_name is None:
-            count_name = self._count_name(from_plus)
-        sql = "SELECT COUNT(*) AS %s FROM %s" % (count_name, from_plus)
-        return self.relation(sql, *args, **kwargs)
+    def call(self, sp_name, *args):
+        arg_vars = ",".join(["%X" for _ in args])
+        query = "SELECT %s(%s)" % (sp_name, arg_vars)
+        results = self.items(query, *args)
+        return getattr(results[0], sp_name)
 
 
 def delegate_tx(f):
@@ -123,19 +158,28 @@ def delegate_db(f):
 
 class Database(object):
 
-    def __init__(self, driver_name=None):
-        self.driver_name = driver_name
-        self._driver = None
+    def __init__(self, db_name=None, driver=None, conn=None):
+        self.db_name = db_name
+        self._driver = driver
+        self._conn = conn
+
+    def clone(self):
+        new_conn = self.driver.connect()
+        return Database(db_name=self.db_name,
+                        driver=self.driver,
+                        conn=new_conn)
 
     @property
     def driver(self):
         if self._driver is None:
-            from db import drivers as _drivers
-            self._driver = _drivers.get(self.driver_name)
+            self._driver = get_driver(self.db_name)
         return self._driver
 
-    def connect(self):
-        return self.driver.connect()
+    @property
+    def conn(self):
+        if self._conn is None:
+            self._conn = self.driver.connect()
+        return self._conn
 
     @contextmanager
     def txc(self, *args, **kwargs):
@@ -143,7 +187,7 @@ class Database(object):
         cursor = kwargs.pop("_cursor", None)
 
         if conn is None:
-            conn = self.connect()
+            conn = self.conn
 
         try:
             if cursor is None:
@@ -170,15 +214,7 @@ class Database(object):
         pass
 
     @delegate_tx
-    def relation(self, sql, *args, **kwargs):
-        pass
-
-    @delegate_tx
     def item(self, sql, *args, **kwargs):
-        pass
-
-    @delegate_tx
-    def tuple(self, sql, *args, **kwargs):
         pass
 
     @delegate_tx
@@ -189,17 +225,24 @@ class Database(object):
         with self.tx(*args, **kwargs) as tx:
             return tx.count(from_plus, *args, **kwargs)
 
-    def rel_count(self, from_plus, count_name=None, *args, **kwargs):
-        with self.tx(*args, **kwargs) as tx:
-            return tx.rel_count(sql, *args, **kwargs)
+    @delegate_tx
+    def call(self, sp_name, *args):
+        pass
 
 
-def get(driver_name=None):
-    return Database(driver_name)
+def get(db_name=None):
+    return Database(db_name=db_name)
 
 
-def put(database):
-    database.release()
+def connect(db_name=None):
+    return get(db_name=db_name).clone()
+
+
+def release(db_handle):
+    db_handle.release()
+
+
+put = release
 
 
 class DefaultDatabase(object):
@@ -228,14 +271,6 @@ class DefaultDatabase(object):
         return self._getdb().item(*args, **kwargs)
 
     @delegate_db
-    def relation(self, *args, **kwargs):
-        return self._getdb().relation(*args, **kwargs)
-
-    @delegate_db
-    def tuple(self, *args, **kwargs):
-        return self._getdb().tuple(*args, **kwargs)
-
-    @delegate_db
     def do(self, *args, **kwargs):
         return self._getdb().do(*args, **kwargs)
 
@@ -248,9 +283,8 @@ class DefaultDatabase(object):
         return self._getdb().count(*args, **kwargs)
 
     @delegate_db
-    def rel_count(self, *args, **kwargs):
-        return self._getdb().rel_count(*args, **kwargs)
-
+    def call(self, *args, **kwargs):
+        return self._getdb().call(*args, **kwargs)
 
 defaultdb = DefaultDatabase()
 
@@ -259,14 +293,12 @@ tx = defaultdb.tx
 txc = defaultdb.txc
 items = defaultdb.items
 item = defaultdb.item
-relation = defaultdb.relation
-tuple = defaultdb.tuple
 do = defaultdb.do
 first = defaultdb.first
 count = defaultdb.count
-rel_count = defaultdb.rel_count
+call = defaultdb.call
 
-import drivers
+from . import drivers
 
 __all__ = [
     "connect",
@@ -275,10 +307,8 @@ __all__ = [
     "do",
     "item",
     "items",
-    "relation",
-    "tuple",
     "count",
-    "rel_count",
     "first",
+    "call",
     "drivers",
 ]

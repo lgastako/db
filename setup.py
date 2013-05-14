@@ -11,6 +11,7 @@ if __name__ == "__main__":
           description="Databases for Humans",
           author="John Evans",
           author_email="lgastako@gmail.com",
+          license="MIT",
           url="https://github.com/lgastako/db",
           install_requires=["antiorm"],
           packages=find_packages(),

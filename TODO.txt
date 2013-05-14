@@ -1,0 +1,5 @@
+Make the thread local stuff true.
+Straighten out the acquire/release crap versus connect, etc.
+Make the documentation glorious, and make sure it's accurate (ideally auto
+    doctested or something).  Everything else should follow from this, basically.
+MySQL (InnoDB) transactions.  Hrm.
