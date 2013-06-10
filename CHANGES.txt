@@ -1,10 +1,15 @@
+2013-06-09 v0.0.9:
+
+    - Relatively major re-write to use database URLs by default and split
+      out drivers into seperate packages.
+
 2013-01-14 v0.0.8:
 
 	- Rename DriverMissing exception to more descriptive NativeDriverMissing.
 	- Rename MissingDriver driver to more descriptive MissingNativeDriver.
 	- Fix MissingNativeDriver's connect method.
 	- Document all exceptions in README.txt.
-	- Add CHANGES.txt file.	
+	- Add CHANGES.txt file.
 
 2013-01-14 v0.0.7:
 
