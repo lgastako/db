@@ -111,11 +111,26 @@ handle for the default database, so in the most common case, you can just use
 the db module itself anywhere you need a database handle, like we are in these
 examples.
 
+Note that the use of db.do and db.item without an explicit transaction
+block will create a new transaction for each statement.
+
 If a call to .item() returns more or less than 1 row then you will receive
 an UnexpectedCardinality exception:
 
     >>> db.item("SELECT * FROM examples")
     UnexpectedCardinality("blah blah")
+
+
+Bind Parameters
+---------------
+db uses the execute_f method from the dbapiext module of Martin Blais' antiorm
+project to handle parameter binding, so you get all the benefits discussed
+in his presentation here:
+
+    http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
+
+The short story is that you use %X (or %(name)X for named parameters) to
+auto-escape values.
 
 
 Transactions
@@ -229,8 +244,13 @@ The Driver class provides default implementations of cursor(), ... FINISH ME.
 Pools
 -----
 
+TODO: Actually, this isn't quite implemented yet.  Coming soon.  But I expect
+      it to end up something like this:
+
 Connection pools are simply implemented as new drivers, e.g.
     "antipool+postgresql://user:pass@host/db?min_conn=10&max_conn=50"
+
+
 
 
 Exceptions:
