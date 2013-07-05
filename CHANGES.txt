@@ -1,3 +1,8 @@
+2013-07-04 v0.0.10:
+
+    - Improved configuration via environment variables.
+    - Add tests for the same.
+
 2013-06-09 v0.0.9:
 
     - Relatively major re-write to use database URLs by default and split

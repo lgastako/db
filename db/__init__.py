@@ -35,20 +35,33 @@ class NoDriverForURL(DBError):
     pass
 
 
-def from_environ(envvar="DATABASE_URL", db_name=None):
-    url = os.environ[envvar]
-    return from_url(url, db_name=db_name)
+class InvalidDatabaseURL(DBError):
+    pass
 
 
 def from_url(url, db_name=None):
-    #from db import drivers as _drivers
+    if url is None or url.strip() == "":
+        raise InvalidDatabaseURL(url)
     parsed = urlparse.urlparse(url)
+    if parsed.scheme == "":
+        raise InvalidDatabaseURL(url)
     try:
         driver_class = drivers._DRIVERS[parsed.scheme]
     except KeyError:
         raise NoDriverForURL(url)
     driver = driver_class.from_url(url)
     return register(driver, db_name=db_name)
+
+
+def from_envvar(envvar="DATABASE_URL", db_name=None):
+    url = os.environ[envvar]
+    return from_url(url, db_name=db_name)
+
+
+def from_environ(db_name=None):
+    env_name = os.environ.get("ENVIRONMENT", "dev").upper()
+    envvar_name = env_name + "_DATABASE_URL"
+    return from_envvar(envvar_name, db_name=db_name)
 
 
 def register(driver, db_name=None):

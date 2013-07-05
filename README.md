@@ -13,12 +13,12 @@ Introduction
 ------------
 
 The fundamental abstraction provided by the db library is the database handle.
-Each database handle represents a lazily instantiated thread-local connection to
-the database.  This means that if you never invoke any of the query methods (item,
-items, etc) then no connection will ever be created.
+Each database handle represents a lazily instantiated thread-local connection
+to the database.  This means that if you never invoke any of the query methods
+(item, items, etc) then no connection will ever be created.
 
-You might acquire a handle like this (or any number of other ways which will
-be covered below):
+You might acquire a handle like this (or any number of other ways which will be
+covered below):
 
     products_db = db.get("products")
 
@@ -54,6 +54,9 @@ environment variable DATABASE_URL, connection pools, etc).
 Basic Usage
 -----------
 
+TODO: This part of the documentation needs to be updated with regards to
+.from_environ() vs from_envvar() etc.
+
 Normally you would set the DATABASE_URL in your environment before running your
 program, but for the sake of making this README a valid self-contained
 executable doctest:
@@ -61,9 +64,9 @@ executable doctest:
     >>> import os
     >>> os.environ["DATABASE_URL"] = "sqlite3://doctest.sqlite"
 
-Once your DATABASE_URL is set up, just import the db library and the appropriate
-driver(s) and then use the from_environ() helper to create a default database
-from that URL:
+Once your DATABASE_URL is set up, just import the db library and the
+appropriate driver(s) and then use the from_environ() helper to create a
+default database from that URL:
 
     >>> import db
     >>> import db_sqlite3
@@ -75,9 +78,9 @@ you want to read from a different variable:
 
     # db.from_environ("PRODUCTION_DATABASE_URL")
 
-You may also specify an name for the database using the db_name keyword argument
-to from_environ.  This is useful when you need to access multiple databases
-from a single project:
+You may also specify an name for the database using the db_name keyword
+argument to from_environ.  This is useful when you need to access multiple
+databases from a single project:
 
     # db.from_environ(db_name="integration_db")
 
@@ -90,9 +93,9 @@ line then you can use .from_url() instead of .from_environ():
 
     # db.from_url("sqlite3:/:memory:", db_name="temp_db")
 
-Now that you have a default database configured, you can use db.item() to execute
-a query that you expect to return exactly 1 row (e.g. a SELECT statement or a
-stored procedure that you expect to return a single row):
+Now that you have a default database configured, you can use db.item() to
+execute a query that you expect to return exactly 1 row (e.g. a SELECT
+statement or a stored procedure that you expect to return a single row):
 
     >>> row = db.item("SELECT * FROM examples WHERE id = 10")
 
@@ -103,19 +106,20 @@ And you can access the fields by name:
     >>> row.example_name
     u'This is example ID 10'
 
-What a minute, what happened to our fundamental unit of abstraction, the database
-handle?  Here we are just calling a method directly on the db module, aren't we?
+What a minute, what happened to our fundamental unit of abstraction, the
+database handle?  Here we are just calling a method directly on the db module,
+aren't we?
 
 Well, yes, the db module acts as a proxy to the default thread-local database
 handle for the default database, so in the most common case, you can just use
 the db module itself anywhere you need a database handle, like we are in these
 examples.
 
-Note that the use of db.do and db.item without an explicit transaction
-block will create a new transaction for each statement.
+Note that the use of db.do and db.item without an explicit transaction block
+will create a new transaction for each statement.
 
-If a call to .item() returns more or less than 1 row then you will receive
-an UnexpectedCardinality exception:
+If a call to .item() returns more or less than 1 row then you will receive an
+UnexpectedCardinality exception:
 
     >>> db.item("SELECT * FROM examples")
     UnexpectedCardinality("blah blah")
@@ -123,9 +127,10 @@ an UnexpectedCardinality exception:
 
 Bind Parameters
 ---------------
+
 db uses the execute_f method from the dbapiext module of Martin Blais' antiorm
-project to handle parameter binding, so you get all the benefits discussed
-in his presentation here:
+project to handle parameter binding, so you get all the benefits discussed in
+his presentation here:
 
     http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
 

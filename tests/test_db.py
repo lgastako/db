@@ -11,6 +11,8 @@ import db_sqlite3
 # BASE TEST DEFINITIONS #
 #########################
 
+MEM_URL = "sqlite3:///:memory:"
+
 CREATE_FOO_SQL = """CREATE TABLE foo (
                         foo_id INTEGER PRIMARY KEY,
                         value TEXT
@@ -69,7 +71,7 @@ class ExampleDBTests(object):
     def setup_method(self, method):
         db.clear()
         db.drivers.autoregister_class(TestDriver)
-        db.from_url("sqlite3:///:memory:")
+        db.from_url(MEM_URL)
         db.do(CREATE_FOO_SQL)
         db.do("INSERT INTO foo VALUES (1, 'foo')")
         self.db = db.get()
@@ -301,8 +303,8 @@ if postgresql_tests_enabled():
 class TestMultipleDatabases(ExampleDBTests):
 
     def test_create_and_connect_to_two_separately(self):
-        db1 = db.from_url("sqlite3:///:memory:", db_name="db1")
-        db2 = db.from_url("sqlite3:///:memory:", db_name="db2")
+        db1 = db.from_url(MEM_URL, db_name="db1")
+        db2 = db.from_url(MEM_URL, db_name="db2")
 
         db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)
@@ -319,8 +321,8 @@ class TestMultipleDatabases(ExampleDBTests):
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
 
     def test_create_and_connect_to_two_separately_one_default(self):
-        db1 = db.from_url("sqlite3:///:memory:")
-        db2 = db.from_url("sqlite3:///:memory:", db_name="db2")
+        db1 = db.from_url(MEM_URL)
+        db2 = db.from_url(MEM_URL, db_name="db2")
 
         db1.do(CREATE_FOO_SQL)
         db2.do(CREATE_FOO_SQL)
@@ -337,8 +339,8 @@ class TestMultipleDatabases(ExampleDBTests):
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
 
     def test_create_and_connect_to_two_separately_default_first(self):
-        db.from_url("sqlite3:///:memory:")
-        db.from_url("sqlite3:///:memory:", db_name="db2")
+        db.from_url(MEM_URL)
+        db.from_url(MEM_URL, db_name="db2")
 
         db1 = db.get()
         db2 = db.get("db2")
@@ -358,8 +360,8 @@ class TestMultipleDatabases(ExampleDBTests):
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
 
     def test_create_and_connect_to_two_separately_default_second(self):
-        db.from_url("sqlite3:///:memory:", db_name="db1")
-        db.from_url("sqlite3:///:memory:")
+        db.from_url(MEM_URL, db_name="db1")
+        db.from_url(MEM_URL)
 
         db1 = db.get("db1")
         db2 = db.get()
@@ -377,3 +379,108 @@ class TestMultipleDatabases(ExampleDBTests):
 
         assert db1.item("SELECT SUM(value) AS n FROM foo").n == 6
         assert db2.item("SELECT SUM(value) AS n FROM foo").n == 15
+
+
+class TestFrom:
+
+    def setup_method(self, method):
+        # TODO: DRY up vs clear_drivers in driver tests
+        db._NAMED_DRIVERS = {}
+        db.drivers._DRIVERS = {}
+
+    def test_from_url_no_url(self):
+        with pytest.raises(db.InvalidDatabaseURL) as ex:
+            db.from_url(None)
+        assert ex.value.message is None
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_url_empty_url(self):
+        with pytest.raises(db.InvalidDatabaseURL) as ex:
+            db.from_url("")
+        assert ex.value.message == ""
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_url_bad_url(self):
+        bad_url = "doesn't look like any URL I've ever seen!"
+        with pytest.raises(db.InvalidDatabaseURL) as ex:
+            db.from_url(bad_url)
+        assert ex.value.message == bad_url
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_url_unknown_protocol(self):
+        with pytest.raises(db.NoDriverForURL):
+            db.from_url("http://www.google.com/")
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_url(self):
+        db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
+        db.from_url(MEM_URL)
+        assert "sqlite3" in db.drivers._DRIVERS
+        assert len(db.drivers._DRIVERS) == 1
+
+    def test_from_envvar_default_not_exists(self, monkeypatch):
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+        with pytest.raises(KeyError) as ex:
+            db.from_envvar()
+        assert ex.value.message == "DATABASE_URL"
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_envvar_default_exists(self, monkeypatch):
+        db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
+        monkeypatch.setenv("DATABASE_URL", MEM_URL)
+        db.from_envvar()
+        assert "sqlite3" in db.drivers._DRIVERS
+        assert len(db.drivers._DRIVERS) == 1
+
+    def test_from_envvar_override_not_exists(self, monkeypatch):
+        monkeypatch.delenv("ALT_URL", raising=False)
+        with pytest.raises(KeyError) as ex:
+            db.from_envvar("ALT_URL")
+        assert ex.value.message == "ALT_URL"
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_envvar_override_exists(self, monkeypatch):
+        db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
+        monkeypatch.setenv("ALT_URL", MEM_URL)
+        db.from_envvar("ALT_URL")
+        assert "sqlite3" in db.drivers._DRIVERS
+        assert len(db.drivers._DRIVERS) == 1
+
+    def test_from_envvar_bad_url(self, monkeypatch):
+        monkeypatch.setenv("DATABASE_URL", "bad bad url")
+        with pytest.raises(db.InvalidDatabaseURL) as ex:
+            db.from_envvar()
+        assert ex.value.message == "bad bad url"
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_environ_default_not_exists(self, monkeypatch):
+        monkeypatch.delenv("ENVIRONMENT", raising=False)
+        monkeypatch.delenv("DEV_DATABASE_URL", raising=False)
+        with pytest.raises(KeyError) as ex:
+            db.from_environ()
+        assert ex.value.message == "DEV_DATABASE_URL"
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_environ_default_exists(self, monkeypatch):
+        db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
+        monkeypatch.delenv("ENVIRONMENT", raising=False)
+        monkeypatch.setenv("DEV_DATABASE_URL", MEM_URL)
+        db.from_environ()
+        assert "sqlite3" in db.drivers._DRIVERS
+        assert len(db.drivers._DRIVERS) == 1
+
+    def test_from_environ_override_not_exists(self, monkeypatch):
+        monkeypatch.setenv("ENVIRONMENT", "yacht_club")
+        monkeypatch.delenv("YACHT_CLUB_DATABASE_URL", raising=False)
+        with pytest.raises(KeyError) as ex:
+            db.from_environ()
+        assert ex.value.message == "YACHT_CLUB_DATABASE_URL"
+        assert len(db.drivers._DRIVERS) == 0
+
+    def test_from_environ_override_exists(self, monkeypatch):
+        db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
+        monkeypatch.setenv("ENVIRONMENT", "yacht_club")
+        monkeypatch.setenv("YACHT_CLUB_DATABASE_URL", MEM_URL)
+        db.from_environ()
+        assert "sqlite3" in db.drivers._DRIVERS
+        assert len(db.drivers._DRIVERS) == 1
