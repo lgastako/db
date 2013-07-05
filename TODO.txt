@@ -3,3 +3,5 @@ Straighten out the acquire/release crap versus connect, etc.
 Make the documentation glorious, and make sure it's accurate (ideally auto
     doctested or something).  Everything else should follow from this, basically.
 MySQL (InnoDB) transactions.  Hrm.
+Provide a good API for getting information about the current database handle,
+    e.g. what database it's connected to, what URL it was created from, etc.
