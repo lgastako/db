@@ -1,3 +1,10 @@
+2013-08-06 v0.0.12:
+
+    - Eliminate envvar/environ nonsense from lost v0.0.11 release. Sigh.
+      Configuration is your own responsability.  Get your database URLs
+      the same way you get any other settings, then use from_url().
+
+
 2013-06-09 v0.0.9:
 
     - Relatively major re-write to use database URLs by default and split

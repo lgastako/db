@@ -35,13 +35,7 @@ class NoDriverForURL(DBError):
     pass
 
 
-def from_environ(envvar="DATABASE_URL", db_name=None):
-    url = os.environ[envvar]
-    return from_url(url, db_name=db_name)
-
-
 def from_url(url, db_name=None):
-    #from db import drivers as _drivers
     parsed = urlparse.urlparse(url)
     try:
         driver_class = drivers._DRIVERS[parsed.scheme]
