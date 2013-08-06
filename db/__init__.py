@@ -35,6 +35,10 @@ class NoDriverForURL(DBError):
     pass
 
 
+class NullDriver(DBError):
+    pass
+
+
 def from_url(url, db_name=None):
     parsed = urlparse.urlparse(url)
     try:
@@ -46,6 +50,8 @@ def from_url(url, db_name=None):
 
 
 def register(driver, db_name=None):
+    if driver is None:
+        raise NullDriver
     _NAMED_DRIVERS[db_name] = driver
     return get(db_name)
 
