@@ -1,3 +1,8 @@
+2013-08-14 v0.0.14:
+
+    - Add transmogrify function to print compiled + applied query.
+
+
 2013-08-06 v0.0.13:
 
     - Prevent registration of null drivers.

@@ -78,6 +78,26 @@ class ExampleDBTests(object):
         db.do("INSERT INTO foo (foo_id, value) VALUES (2, 'bar')")
 
 
+class TransmogrificationTests(ExampleDBTests):
+
+    def test_null_transmogrification(self):
+        assert (db.transmogrify("SELECT * FROM foo") ==
+                ("SELECT * FROM foo", []))
+
+    def test_simple_transmogrification(self):
+        assert (db.transmogrify("SELECT * FROM foo WHERE bar = %X", 1) ==
+                ("SELECT * FROM foo WHERE bar = ?", [1]))
+
+    def test_more_complicated_transmogrification(self):
+        assert (db.transmogrify("UPDATE foo SET %X WHERE e = %X AND g = %X",
+                                {"a": "b", "c": "d"},
+                                "f",
+                                3.14159) ==
+                ("UPDATE foo SET a = ?, c = ? "
+                 "WHERE e = ? AND g = ?",
+                 ['b', 'd', 'f', 3.14159]))
+
+
 class DoTests(ExampleDBTests):
 
     def test_insert(self):
@@ -245,6 +265,16 @@ class ImplicitConnection(object):
 ######################################
 # COMBINATIONS OF TESTS AND CONTEXTS #
 ######################################
+
+
+class TestTransmogrificationExplicit(ExplicitConnection,
+                                     TransmogrificationTests):
+    pass
+
+
+class TestTransmogrificationImplicit(ImplicitConnection,
+                                     TransmogrificationTests):
+    pass
 
 
 class TestDoExplicit(ExplicitConnection, DoTests):

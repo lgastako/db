@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from functools import wraps
 
 from dbapiext import execute_f as execute
+from dbapiext import qcompile
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,10 @@ class Transaction(object):
         self.db = db
         self.conn = conn
         self.cursor = cursor
+
+    def transmogrify(self, sql, *args, **kwargs):
+        compiled = qcompile(sql, paramstyle=self.db.driver.PARAM_STYLE)
+        return compiled.apply(*args, **kwargs)
 
     def items(self, sql, *args, **kwargs):
         kwargs.setdefault("paramstyle", self.db.driver.PARAM_STYLE)
@@ -206,6 +211,10 @@ class Database(object):
             yield Transaction(self, conn, cursor)
 
     @delegate_tx
+    def transmogrify(self, sql, *args, **kwargs):
+        pass
+
+    @delegate_tx
     def items(self, sql, *args, **kwargs):
         pass
 
@@ -263,6 +272,10 @@ class DefaultDatabase(object):
         return self._getdb().txc(*args, **kwargs)
 
     @delegate_db
+    def transmogrify(self, *args, **kwargs):
+        return self._getdb().transmogrify(*args, **kwargs)
+
+    @delegate_db
     def items(self, *args, **kwargs):
         return self._getdb().items(*args, **kwargs)
 
@@ -291,6 +304,7 @@ defaultdb = DefaultDatabase()
 connect = defaultdb.connect
 tx = defaultdb.tx
 txc = defaultdb.txc
+transmogrify = defaultdb.transmogrify
 items = defaultdb.items
 item = defaultdb.item
 do = defaultdb.do
@@ -305,8 +319,9 @@ __all__ = [
     "tx",
     "txc",
     "do",
-    "item",
+    "transmogrify",
     "items",
+    "item",
     "count",
     "first",
     "call",
