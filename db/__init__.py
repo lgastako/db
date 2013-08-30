@@ -97,7 +97,7 @@ class Transaction(object):
         self.db.driver.fixup_cursor(self.cursor)
         try:
             results = self.cursor.fetchall()
-        except Exception, ex:
+        except Exception as ex:
             results = None
             if not self.db.driver.ignore_exception(ex):
                 raise
