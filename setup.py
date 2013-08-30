@@ -14,5 +14,6 @@ if __name__ == "__main__":
           license="MIT",
           url="https://github.com/lgastako/db",
           install_requires=["antiorm"],
+          tests_require=["db-sqlite3", "pytest"],
           packages=find_packages(),
           provides=["db"])
