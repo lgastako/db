@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from functools import wraps
 
 from dbapiext import execute_f as execute
+from dbapiext import qcompile
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,10 @@ class InvalidDatabaseURL(DBError):
     pass
 
 
+class NullDriver(DBError):
+    pass
+
+
 def from_url(url, db_name=None):
     if url is None or url.strip() == "":
         raise InvalidDatabaseURL(url)
@@ -65,6 +70,8 @@ def from_environ(db_name=None):
 
 
 def register(driver, db_name=None):
+    if driver is None:
+        raise NullDriver
     _NAMED_DRIVERS[db_name] = driver
     return get(db_name)
 
@@ -99,13 +106,17 @@ class Transaction(object):
         self.conn = conn
         self.cursor = cursor
 
+    def transmogrify(self, sql, *args, **kwargs):
+        compiled = qcompile(sql, paramstyle=self.db.driver.PARAM_STYLE)
+        return compiled.apply(*args, **kwargs)
+
     def items(self, sql, *args, **kwargs):
         kwargs.setdefault("paramstyle", self.db.driver.PARAM_STYLE)
         execute(self.cursor, sql, *args, **kwargs)
         self.db.driver.fixup_cursor(self.cursor)
         try:
             results = self.cursor.fetchall()
-        except Exception, ex:
+        except Exception as ex:
             results = None
             if not self.db.driver.ignore_exception(ex):
                 raise
@@ -219,6 +230,10 @@ class Database(object):
             yield Transaction(self, conn, cursor)
 
     @delegate_tx
+    def transmogrify(self, sql, *args, **kwargs):
+        pass
+
+    @delegate_tx
     def items(self, sql, *args, **kwargs):
         pass
 
@@ -276,6 +291,10 @@ class DefaultDatabase(object):
         return self._getdb().txc(*args, **kwargs)
 
     @delegate_db
+    def transmogrify(self, *args, **kwargs):
+        return self._getdb().transmogrify(*args, **kwargs)
+
+    @delegate_db
     def items(self, *args, **kwargs):
         return self._getdb().items(*args, **kwargs)
 
@@ -304,6 +323,7 @@ defaultdb = DefaultDatabase()
 connect = defaultdb.connect
 tx = defaultdb.tx
 txc = defaultdb.txc
+transmogrify = defaultdb.transmogrify
 items = defaultdb.items
 item = defaultdb.item
 do = defaultdb.do
@@ -318,8 +338,9 @@ __all__ = [
     "tx",
     "txc",
     "do",
-    "item",
+    "transmogrify",
     "items",
+    "item",
     "count",
     "first",
     "call",

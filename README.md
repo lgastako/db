@@ -9,6 +9,7 @@ already so I figured I'd put it out there.  Also please note that this is not,
 and never will be, an attempt at an ORM (although it may be reasonable to write
 one on top of it).
 
+
 Introduction
 ------------
 
@@ -136,6 +137,9 @@ his presentation here:
 
 The short story is that you use %X (or %(name)X for named parameters) to
 auto-escape values.
+
+You can use the db.transmogrify function to get a compiled query without
+executing it.
 
 
 Transactions
