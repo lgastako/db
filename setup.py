@@ -7,7 +7,7 @@ from setuptools import find_packages
 
 if __name__ == "__main__":
     setup(name="db",
-          version="0.0.15",
+          version="0.1.1",
           description="Databases for Humans",
           author="John Evans",
           author_email="lgastako@gmail.com",

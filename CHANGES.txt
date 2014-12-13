@@ -1,3 +1,8 @@
+2014-12-12  v0.1.1:
+
+    - Simplify from_env.
+    - Clean up README a bit.
+
 2013-08-14 v0.0.14:
 
     - Add transmogrify function to print compiled + applied query.
