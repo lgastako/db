@@ -156,7 +156,7 @@ db uses the `execute_f` method from the dbapiext module of Martin Blais' antiorm
 project to handle parameter binding, so you get all the benefits discussed in
 his presentation here:
 
-    http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
+http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
 
 The short story is that you use `%X` (or `%(name)X` for named parameters) to
 auto-escape values.
