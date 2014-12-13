@@ -11,7 +11,10 @@ doctest:
 	python -mdoctest README.md
 
 test:
-	py.test
+	py.test -s -x --pdb $(EXTRA)
+
+tests:
+	py.test -q $(EXTRA)
 
 upload:
 	python setup.py sdist upload
@@ -20,3 +23,7 @@ c: clean
 d: doctest
 u: upload
 t: test
+ts: tests
+
+.PHONY: clean clear-pycs doctest test tests upload
+.PHONY: c d u t ts

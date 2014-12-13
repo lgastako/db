@@ -58,15 +58,17 @@ def from_url(url, db_name=None):
     return register(driver, db_name=db_name)
 
 
-def from_envvar(envvar="DATABASE_URL", db_name=None):
-    url = os.environ[envvar]
+def from_env(var=None, db_name=None):
+    var_name = "DATABASE_URL"
+    if var is None:
+        try:
+            env_name = os.environ["ENVIRONMENT"]
+            var = env_name.upper() + "_" + var_name
+        except KeyError:
+            var = var_name
+    print "var", var
+    url = os.environ[var]
     return from_url(url, db_name=db_name)
-
-
-def from_environ(db_name=None):
-    env_name = os.environ.get("ENVIRONMENT", "dev").upper()
-    envvar_name = env_name + "_DATABASE_URL"
-    return from_envvar(envvar_name, db_name=db_name)
 
 
 def register(driver, db_name=None):

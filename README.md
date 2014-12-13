@@ -76,9 +76,6 @@ appropriate driver(s) and then use the `from_env()` helper to create a
 default database from that URL:
 
 ```python
-```
-
-```python
 >>> from db_sqlite3 import db
 >>> db.from_env()
 <db_sqlite3.Sqlite3Driver object at 0x...>

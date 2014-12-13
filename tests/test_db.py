@@ -448,54 +448,54 @@ class TestFrom:
         assert "sqlite3" in db.drivers._DRIVERS
         assert len(db.drivers._DRIVERS) == 1
 
-    def test_from_envvar_default_not_exists(self, monkeypatch):
+    def test_from_env_default_not_exists(self, monkeypatch):
         monkeypatch.delenv("DATABASE_URL", raising=False)
         with pytest.raises(KeyError) as ex:
-            db.from_envvar()
+            db.from_env()
         assert ex.value.message == "DATABASE_URL"
         assert len(db.drivers._DRIVERS) == 0
 
-    def test_from_envvar_default_exists(self, monkeypatch):
+    def test_from_env_default_exists(self, monkeypatch):
         db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
         monkeypatch.setenv("DATABASE_URL", MEM_URL)
-        db.from_envvar()
+        db.from_env()
         assert "sqlite3" in db.drivers._DRIVERS
         assert len(db.drivers._DRIVERS) == 1
 
-    def test_from_envvar_override_not_exists(self, monkeypatch):
+    def test_from_env_override_not_exists(self, monkeypatch):
         monkeypatch.delenv("ALT_URL", raising=False)
         with pytest.raises(KeyError) as ex:
-            db.from_envvar("ALT_URL")
+            db.from_env("ALT_URL")
         assert ex.value.message == "ALT_URL"
         assert len(db.drivers._DRIVERS) == 0
 
-    def test_from_envvar_override_exists(self, monkeypatch):
+    def test_from_env_override_exists(self, monkeypatch):
         db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
         monkeypatch.setenv("ALT_URL", MEM_URL)
-        db.from_envvar("ALT_URL")
+        db.from_env("ALT_URL")
         assert "sqlite3" in db.drivers._DRIVERS
         assert len(db.drivers._DRIVERS) == 1
 
-    def test_from_envvar_bad_url(self, monkeypatch):
+    def test_from_env_bad_url(self, monkeypatch):
         monkeypatch.setenv("DATABASE_URL", "bad bad url")
         with pytest.raises(db.InvalidDatabaseURL) as ex:
-            db.from_envvar()
+            db.from_env()
         assert ex.value.message == "bad bad url"
         assert len(db.drivers._DRIVERS) == 0
 
     def test_from_environ_default_not_exists(self, monkeypatch):
         monkeypatch.delenv("ENVIRONMENT", raising=False)
-        monkeypatch.delenv("DEV_DATABASE_URL", raising=False)
+        monkeypatch.delenv("DATABASE_URL", raising=False)
         with pytest.raises(KeyError) as ex:
-            db.from_environ()
-        assert ex.value.message == "DEV_DATABASE_URL"
+            db.from_env()
+        assert ex.value.message == "DATABASE_URL"
         assert len(db.drivers._DRIVERS) == 0
 
     def test_from_environ_default_exists(self, monkeypatch):
         db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
         monkeypatch.delenv("ENVIRONMENT", raising=False)
-        monkeypatch.setenv("DEV_DATABASE_URL", MEM_URL)
-        db.from_environ()
+        monkeypatch.setenv("DATABASE_URL", MEM_URL)
+        db.from_env()
         assert "sqlite3" in db.drivers._DRIVERS
         assert len(db.drivers._DRIVERS) == 1
 
@@ -503,7 +503,7 @@ class TestFrom:
         monkeypatch.setenv("ENVIRONMENT", "yacht_club")
         monkeypatch.delenv("YACHT_CLUB_DATABASE_URL", raising=False)
         with pytest.raises(KeyError) as ex:
-            db.from_environ()
+            db.from_env()
         assert ex.value.message == "YACHT_CLUB_DATABASE_URL"
         assert len(db.drivers._DRIVERS) == 0
 
@@ -511,6 +511,6 @@ class TestFrom:
         db.drivers.autoregister_class(db_sqlite3.Sqlite3Driver)
         monkeypatch.setenv("ENVIRONMENT", "yacht_club")
         monkeypatch.setenv("YACHT_CLUB_DATABASE_URL", MEM_URL)
-        db.from_environ()
+        db.from_env()
         assert "sqlite3" in db.drivers._DRIVERS
         assert len(db.drivers._DRIVERS) == 1
