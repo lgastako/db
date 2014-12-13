@@ -6,44 +6,52 @@ A more programmer friendly interface to databases inspired by Kenneth Reitz's
 
 I've got a long way to go but I'm using this code in a number of projects
 already so I figured I'd put it out there.  Also please note that this is not,
-and never will be, an attempt at an ORM (although it may be reasonable to write
-one on top of it).
+and never will be, an attempt at an ORM (although it may be reasonable or even
+advantageous to write one on top of it).
 
 
 Introduction
 ------------
 
 The fundamental abstraction provided by the db library is the database handle.
-Each database handle represents a lazily instantiated thread-local connection
-to the database.  This means that if you never invoke any of the query methods
+Each database handle represents a lazily instantiated thread-local connection to
+the database.  This means that if you never invoke any of the query methods
 (item, items, etc) then no connection will ever be created.
 
 You might acquire a handle like this (or any number of other ways which will be
 covered below):
 
-    products_db = db.get("products")
+```python
+products_db = db.get("products")
+```
 
 From any handle you can obtain a new handle to the same database but with it's
 own new dedicated connection via cloning:
 
-    products_db_c2 = products_db.clone()
+```python
+products_db_c2 = products_db.clone()
+```
 
 A handle provides various methods for executing queries and handling various
 common cases (counts, expecting exactly 1 row, want the first row back, etc).
 
 For example, a simple query might look like:
 
-    products = products_db.items("SELECT * FROM products")
+```python
+products = products_db.items("SELECT * FROM products")
+```
 
 In addition a handle provides a context manager for managing the lifecycle of
 transactions:
 
-    with products_db.tx() as tx:
-        best_product = tx.item("SELECT * FROM products ORDER BY total_sales LIMIT 1")
-        tx.do("UPDATE products SET price = price + 0.01 WHERE product_id = %X",
-              best_product.product_id)
+```python
+with products_db.tx() as tx:
+    best_product = tx.item("SELECT * FROM products ORDER BY total_sales LIMIT 1")
+    tx.do("UPDATE products SET price = price + 0.01 WHERE product_id = %X",
+          best_product.product_id)
+```
 
-The object returned ("tx") within the with block is database handle scoped to
+The object returned (`tx`) within the with block is database handle scoped to
 the transaction.
 
 The db library provides a standard URL-based interface to specifying database
@@ -55,57 +63,71 @@ environment variable DATABASE_URL, connection pools, etc).
 Basic Usage
 -----------
 
-TODO: This part of the documentation needs to be updated with regards to
-.from_environ() vs from_envvar() etc.
+The most common scenario is a single database.  The most common way to configure
+the database in e.g. a deployed web app would be to set an environment variable
+like "DATABASE_URL" to a URL that points to your database.  Something like:
 
-Normally you would set the DATABASE_URL in your environment before running your
-program, but for the sake of making this README a valid self-contained
-executable doctest:
+```sh
+DATABASE_URL="postgres://user:pass@host:5432/dbname"
+```
 
-    >>> import os
-    >>> os.environ["DATABASE_URL"] = "sqlite3://doctest.sqlite"
-
-Once your DATABASE_URL is set up, just import the db library and the
-appropriate driver(s) and then use the from_environ() helper to create a
+Once your `DATABASE_URL` is set up, just import the db library and the
+appropriate driver(s) and then use the `from_env()` helper to create a
 default database from that URL:
 
-    >>> import db
-    >>> import db_sqlite3
-    >>> db.from_environ()                               # doctest: +ELLIPSIS
-    <db_sqlite3.Sqlite3Driver object at 0x...>
+```python
+```
 
-You can pass the name of a different environment variable to from_environ if
+```python
+>>> from db_sqlite3 import db
+>>> db.from_env()
+<db_sqlite3.Sqlite3Driver object at 0x...>
+```
+
+You can pass the name of a different environment variable to from_env if
 you want to read from a different variable:
 
-    # db.from_environ("PRODUCTION_DATABASE_URL")
+```python
+db.from_env("PRODUCTION_DATABASE_URL")
+```
 
-You may also specify an name for the database using the db_name keyword
-argument to from_environ.  This is useful when you need to access multiple
+You may also specify an name for the database using the `db_name` keyword
+argument to `from_env`.  This is useful when you need to access multiple
 databases from a single project:
 
-    # db.from_environ(db_name="integration_db")
+```python
+db.from_env(db_name="integration_db")
+```
 
 Or of course combine the two:
 
-    # db.from_environ("PRODUCTION_DATABASE_URL", db_name="prod_db")
+```python
+db.from_env("PRODUCTION_DATABASE_URL", db_name="prod_db")
+```
 
 If you prefer to get your database URLs from someplace other than the command
-line then you can use .from_url() instead of .from_environ():
+line then you can use `.from_url()` instead of `.from_env()`:
 
-    # db.from_url("sqlite3:/:memory:", db_name="temp_db")
+```python
+db.from_url("sqlite3:/:memory:", db_name="temp_db")
+```
 
-Now that you have a default database configured, you can use db.item() to
-execute a query that you expect to return exactly 1 row (e.g. a SELECT
-statement or a stored procedure that you expect to return a single row):
+Now that you have a default database configured, you can use `db.item()` to
+execute a query that you expect to return exactly 1 row (e.g. a SELECT statement
+or a stored procedure that you expect to return a single row):
 
-    >>> row = db.item("SELECT * FROM examples WHERE id = 10")
+```python
+>>> row = db.item("SELECT * FROM examples WHERE id = 10")
+```
 
 And you can access the fields by name:
 
-    >>> row.example_id
-    10
-    >>> row.example_name
-    u'This is example ID 10'
+```python
+>>> row.example_id
+10
+>>> row.example_name
+u'This is example ID 10'
+```
 
 What a minute, what happened to our fundamental unit of abstraction, the
 database handle?  Here we are just calling a method directly on the db module,
@@ -122,23 +144,24 @@ will create a new transaction for each statement.
 If a call to .item() returns more or less than 1 row then you will receive an
 UnexpectedCardinality exception:
 
-    >>> db.item("SELECT * FROM examples")
-    UnexpectedCardinality("blah blah")
-
+```python
+>>> db.item("SELECT * FROM examples")
+UnexpectedCardinality("blah blah")
+```
 
 Bind Parameters
 ---------------
 
-db uses the execute_f method from the dbapiext module of Martin Blais' antiorm
+db uses the `execute_f` method from the dbapiext module of Martin Blais' antiorm
 project to handle parameter binding, so you get all the benefits discussed in
 his presentation here:
 
     http://furius.ca/antiorm/doc/talks/dbapiext/dbapiext-pres.pdf
 
-The short story is that you use %X (or %(name)X for named parameters) to
+The short story is that you use `%X` (or `%(name)X` for named parameters) to
 auto-escape values.
 
-You can use the db.transmogrify function to get a compiled query without
+You can use the `db.transmogrify` function to get a compiled query without
 executing it.
 
 
@@ -148,20 +171,22 @@ Transactions
 To explicitly control transactions, use a with block with the transaction
 context manager:
 
-    >>> with db.tx() as tx:
-    ...     row = tx.item("SELECT * FROM examples")
-    ...     tx.do("INSERT INTO examples (name) VALUES ('foo')")
-    ...
-    >>> row.id
-    >>> row.example_id
-    10
+```python
+>>> with db.tx() as tx:
+...     row = tx.item("SELECT * FROM examples")
+...     tx.do("INSERT INTO examples (name) VALUES ('foo')")
+...
+>>> row.id
+>>> row.example_id
+10
+```
 
 In this case, a new transaction wraps the with block.  If the transaction
 issues a ROLLBACK statement, the with block will return with no error, but
 if the transaction aborts causing a rollback, then the with block will raise
 the appropriate exception.
 
-The use of the individual query methods (.do, .item and .items) without an
+The use of the individual query methods (`.do`, `.item` and `.items`) without an
 explicit transaction block results in a new transaction for each statement.
 
 
@@ -175,28 +200,34 @@ obtain a connection.
 You can register multiple databases by providing a name for any non-default
 databases:
 
-    >>> db.from_url("postgresql://tweeter:pw140@localhost:5432/tweetsdb",
-    ...             db_name="tweets")
-    >>> db.from_url("postgresql://dsgnr:pretty@localhost:5432/tweetsdb",
-    ...             db_name="images")
+```python
+>>> db.from_url("postgresql://tweeter:pw140@localhost:5432/tweetsdb",
+...             db_name="tweets")
+>>> db.from_url("postgresql://dsgnr:pretty@localhost:5432/tweetsdb",
+...             db_name="images")
+```
 
 Then access them individually later:
 
-    >>> tweets_db = db.get("tweets")
-    >>> images_db = db.get("images")
+```python
+>>> tweets_db = db.get("tweets")
+>>> images_db = db.get("images")
+```
 
 And use all of the same functions on them:
 
-    >>> row = tweetsdb.item("SELECT * FROM tweet_examples")
-    >>> row.example_id
-    11
+```python
+>>> row = tweetsdb.item("SELECT * FROM tweet_examples")
+>>> row.example_id
+11
 
-    >>> with imagesdb.tx() as tx:
-    ...     row = tx.item("SELECT * FROM image_examples")
-    ...     tx.do("INSERT INTO image_examples (name) VALUES ('bar')")
-    ...
-    >>> row.example_id
-    11
+>>> with imagesdb.tx() as tx:
+...     row = tx.item("SELECT * FROM image_examples")
+...     tx.do("INSERT INTO image_examples (name) VALUES ('bar')")
+...
+>>> row.example_id
+11
+```
 
 etc.
 
@@ -228,26 +259,26 @@ Drivers for the db module are very simple.  They are objects which provide:
     .from_url(url)
         An alternate constructor to instantiate a driver from a URL.
 
-The db.drivers.Driver class provides an base class to make it easier to
+The `db.drivers.Driver` class provides an base class to make it easier to
 implement new drivers.  Most drivers will/should extend from this class.
 
 The two methods that MUST be implemented to make a driver useful are the
-from_url() class method and the acquire() method.
+`from_url()` class method and the `acquire()` method.
 
-Driver provides a default implementation of release() which does
-nothing.  If your driver needs to free resources when a connection is no longer
-in use (for example if it is a Pool driver that needs to return the connection
-to the pool) then you must also override this method.
+Driver provides a default implementation of `release()` which does nothing.  If
+your driver needs to free resources when a connection is no longer in use (for
+example if it is a Pool driver that needs to return the connection to the pool)
+then you must also override this method.
 
-Driver provides a default implementation of ignore(ex) which always returns
-False.  If there are any exceptions that are safe to ignore in your driver then
-you must override this method.
+Driver provides a default implementation of `ignore(ex)` which always returns
+`False`.  If there are any exceptions that are safe to ignore in your driver
+then you must override this method.
 
-Driver provides a default implementation of cursor() which delegates driver-specific
-cursor setup to the method 'setup_cursor(cursor)' which has a no-op default
-implementation.
+Driver provides a default implementation of `cursor()` which delegates
+driver-specific cursor setup to the method `setup_cursor(cursor)` which has a
+no-op default implementation.
 
-The Driver class provides default implementations of cursor(), ... FINISH ME.
+The Driver class provides default implementations of `cursor()`, ... FINISH ME.
 
 
 Pools
@@ -260,13 +291,11 @@ Connection pools are simply implemented as new drivers, e.g.
     "antipool+postgresql://user:pass@host/db?min_conn=10&max_conn=50"
 
 
-
-
 Exceptions:
 -----------
 
-Currently there are four custom exceptions that the db module might raise,
-all of which are a subclass of db.DBError (which currently is never raised
+Currently there are four custom exceptions that the db module might raise, all
+of which are a subclass of `db.DBError` (which currently is never raised
 directly):
 
     NoDefaultDatabase
