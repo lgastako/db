@@ -18,8 +18,37 @@ Each database handle represents a lazily instantiated thread-local connection to
 the database.  This means that if you never invoke any of the query methods
 (item, items, etc) then no connection will ever be created.
 
-You might acquire a handle like this (or any number of other ways which will be
-covered below):
+The simpliest way to configure a database is to create an environment variable
+called `DATABASE_URL` which contains a URL describing your database, like:
+
+```sh
+export DATABASE_URL='postgres://user:pass@host:5432/db_name'
+```
+
+And then use `from_env()` like so:
+
+```python
+db.from_env()
+```
+
+The `from_env()` function will first look for an environment variable called
+`ENVIRONMENT` that specifies which environment you are operating in.  If found,
+it is prepended in all uppercase to "_DATABASE_URL" to form the full name of the
+environment variable in which the database URL will be sought.
+
+For example, if `ENVIRONMENT` were set to `prod` then `db` will expect to
+find the database URL in the environment variable `PROD_DATABASE_URL`.
+
+If the ENVIRONMENT variable is not set then just `DATABASE_URL` will be used.
+
+You can specify a different variable by passing it to `from_env()` like so:
+
+```python
+db.from_env("SPECIAL_DATABASE_URL")
+```
+
+You might also acquire a handle for a specific database when more than one
+database is configured, like so:
 
 ```python
 products_db = db.get("products")
