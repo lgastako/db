@@ -66,7 +66,6 @@ def from_env(var=None, db_name=None):
             var = env_name.upper() + "_" + var_name
         except KeyError:
             var = var_name
-    print "var", var
     url = os.environ[var]
     return from_url(url, db_name=db_name)
 
